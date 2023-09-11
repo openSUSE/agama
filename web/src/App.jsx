@@ -39,7 +39,8 @@ import {
   Sidebar
 } from "~/components/core";
 import { ChangeProductLink } from "~/components/software";
-import { Layout, Title, DBusError } from "~/components/layout";
+import { Layout, Title, DBusError, Icon, } from "~/components/layout";
+import { FormSelect, FormSelectOption } from "@patternfly/react-core";
 
 function App() {
   const client = useInstallerClient();
@@ -85,14 +86,45 @@ function App() {
   return (
     <>
       <Sidebar>
-        <ChangeProductLink />
-        <IssuesLink />
-        <Disclosure label={_("Diagnostic tools")} data-keep-sidebar-open>
-          <ShowLogButton />
-          <LogsButton data-keep-sidebar-open="true" />
-          <ShowTerminalButton />
-        </Disclosure>
-        <About />
+        <div className="flex-stack">
+          <ChangeProductLink />
+          <IssuesLink />
+          <Disclosure label={_("Diagnostic tools")} data-keep-sidebar-open>
+            <ShowLogButton />
+            <LogsButton data-keep-sidebar-open="true" />
+            <ShowTerminalButton />
+          </Disclosure>
+        </div>
+        <div>
+          <div className="split justify-between">
+            <div className="flex-stack">
+              <h3>
+                <Icon name="translate" size="24" /> {_("UI Language")}
+              </h3>
+              <FormSelect
+                id="language"
+                aria-label={_("language")}
+                value="en"
+              >
+                <FormSelectOption key="en" value="en" label="English (GB)" />
+                <FormSelectOption key="en" value="en" label="Spanish - Español" />
+              </FormSelect>
+            </div>
+            <div className="flex-stack">
+              <h3>
+                <Icon name="keyboard" size="24" /> {_("UI Keyboard")}
+              </h3>
+              <FormSelect
+                id="language"
+                aria-label={_("language")}
+                value="en"
+              >
+                <FormSelectOption key="en" value="en" label="English" />
+              </FormSelect>
+            </div>
+          </div>
+          <About />
+        </div>
       </Sidebar>
 
       <Layout>

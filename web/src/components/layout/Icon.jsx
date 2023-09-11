@@ -27,6 +27,7 @@ import { _ } from "~/i18n";
 // NOTE: "@icons" is an alias to use a shorter path to real @material-symbols
 // icons location. Check the tsconfig.json file to see its value.
 import AddAPhoto from "@icons/add_a_photo.svg?component";
+import ArrowForward from "@icons/arrow_forward.svg?component";
 import AutoMode from "@icons/auto_mode.svg?component";
 import Apps from "@icons/apps.svg?component";
 import Badge from "@icons/badge.svg?component";
@@ -47,6 +48,7 @@ import Help from "@icons/help.svg?component";
 import HomeStorage from "@icons/home_storage.svg?component";
 import Info from "@icons/info.svg?component";
 import Inventory from "@icons/inventory_2.svg?component";
+import Keyboard from "@icons/keyboard.svg?component";
 import Lan from "@icons/lan.svg?component";
 import Lock from "@icons/lock.svg?component";
 import ManageAccounts from "@icons/manage_accounts.svg?component";
@@ -78,6 +80,7 @@ import Loading from "./three-dots-loader-icon.svg?component";
 
 const icons = {
   add_a_photo: AddAPhoto,
+  arrow_forward: ArrowForward,
   auto_mode: AutoMode,
   apps: Apps,
   badge: Badge,
@@ -98,6 +101,7 @@ const icons = {
   home_storage: HomeStorage,
   info: Info,
   inventory_2: Inventory,
+  keyboard: Keyboard,
   lan: Lan,
   loading: Loading,
   lock: Lock,
