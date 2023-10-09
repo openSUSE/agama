@@ -94,10 +94,11 @@ function App() {
             <LogsButton data-keep-sidebar-open="true" />
             <ShowTerminalButton />
           </Disclosure>
+          <About />
         </div>
-        <div>
-          <div className="split justify-between">
-            <div className="flex-stack">
+        <div className="full-width highlighted">
+          <div className="split">
+            <div className="flex-stack half-width">
               <h3>
                 <Icon name="translate" size="24" /> {_("UI Language")}
               </h3>
@@ -110,7 +111,7 @@ function App() {
                 <FormSelectOption key="en" value="en" label="Spanish - Español" />
               </FormSelect>
             </div>
-            <div className="flex-stack">
+            <div className="flex-stack half-width">
               <h3>
                 <Icon name="keyboard" size="24" /> {_("UI Keyboard")}
               </h3>
@@ -123,7 +124,6 @@ function App() {
               </FormSelect>
             </div>
           </div>
-          <About />
         </div>
       </Sidebar>
 
