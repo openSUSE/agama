@@ -73,6 +73,7 @@ function App() {
     return <Outlet />;
   };
 
+  console.log("LANGUAGES: ", LANGUAGES);
   return (
     <>
       <SidebarArea>

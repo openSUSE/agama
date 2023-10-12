@@ -71,6 +71,7 @@
     "globals": {
         "require": false,
         "module": false,
-        "COCKPIT_TARGET_URL": "readonly"
+        "COCKPIT_TARGET_URL": "readonly",
+        "LANGUAGES": "readonly"
     }
 }

@@ -1,4 +1,5 @@
 const fs = require("fs");
+const glob = require("glob");
 const path = require("path");
 
 const Copy = require("copy-webpack-plugin");
@@ -60,6 +61,9 @@ const plugins = [
   // but because ESlint runs *before* the DefinePlugin we need to
   // add it as a global variable in .eslintrc.json config file
   new webpack.DefinePlugin({ COCKPIT_TARGET_URL: JSON.stringify(cockpitTarget) }),
+  new webpack.DefinePlugin({ LANGUAGES: JSON.stringify(
+    glob.sync(path.resolve(__dirname, "po/*.po")).map(po => path.basename(po).slice(0, -3)))
+  }),
 ].filter(Boolean);
 
 if (eslint) {
