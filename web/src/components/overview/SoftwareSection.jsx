@@ -142,8 +142,8 @@ export default function SoftwareSection({ showErrors }) {
     <Section
       key="software-section"
       // TRANSLATORS: page section
+      keepBleed
       title={_("Software")}
-      icon="apps"
       loading={state.busy}
       errors={errors}
       path="/software"

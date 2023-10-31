@@ -3,10 +3,11 @@
 // section layouts.
 section:not([class^="pf-c"]) {
   display: grid;
-  grid-template-columns: min-content 1fr;
-  grid-template-areas:
-    "icon title"
-    ".... content";
+  grid-template-rows:
+    [header] auto
+    [body] auto
+  ;
+  grid-template-columns: [bleed] min-content [content] 1fr;
   gap: var(--spacer-small);
 }
 
@@ -14,12 +15,20 @@ section:not(:last-child, [class^="pf-c"]) {
   margin-block-end: var(--spacer-large);
 }
 
-section > svg {
-  grid-area: icon;
-}
-
 section > h2 {
-  grid-area: title;
+  display: grid;
+  grid-area: header;
+  grid-template-columns: subgrid;
+  grid-column: bleed / content-end;
+
+  span[data-part="icon"] {
+    min-width: 32px;
+    grid-column: bleed / content;
+  }
+
+  span[data-part="title"] {
+    grid-column: content;
+  }
 
   button {
     border: none;
@@ -42,7 +51,9 @@ section > h2 {
 }
 
 section > .content {
-  grid-area: content;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: content;
 }
 
 // Custom selection list

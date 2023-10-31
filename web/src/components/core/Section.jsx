@@ -35,10 +35,13 @@ import { ValidationErrors } from "~/components/core";
  *
  * @return {React.ReactElement}
  */
-const SectionIcon = ({ name, size = 32 }) => {
-  if (!name) return null;
+const SectionIcon = ({ keepBleed = false, name, size = 32 }) => {
+  if (!name && !keepBleed) return null;
 
-  return <Icon name={name} size={size} aria-hidden />;
+  const Wrapper = ({ children }) => <span data-part="icon">{children}</span>;
+  const TheIcon = () => name && <Icon name={name} size={size} aria-hidden />;
+
+  return <Wrapper><TheIcon /></Wrapper>;
 };
 
 /**
@@ -52,7 +55,7 @@ const SectionIcon = ({ name, size = 32 }) => {
  *
  * @return {JSX.Element}
  */
-const SectionTitle = ({ id, text, path, openDialog }) => {
+const SectionTitle = ({ id, keepBleed, iconName, iconSize, text, path, openDialog }) => {
   let title = <>{text}</>;
 
   if (path && path !== "") {
@@ -64,7 +67,8 @@ const SectionTitle = ({ id, text, path, openDialog }) => {
 
   return (
     <h2 id={id}>
-      {title}
+      <SectionIcon keepBleed={keepBleed} name={iconName} size={iconSize} />
+      <span data-part="title">{title}</span>
     </h2>
   );
 };
@@ -142,6 +146,7 @@ export default function Section({
   loading,
   errors,
   children,
+  keepBleed = false,
   "aria-label": ariaLabel
 }) {
   const headerId = `${name || crypto.randomUUID()}-section-header`;
@@ -153,11 +158,10 @@ export default function Section({
   const SectionHeader = () => {
     if (!title) return;
 
+    const iconName = loading ? "loading" : icon;
+
     return (
-      <>
-        <SectionIcon name={loading ? "loading" : icon} />
-        <SectionTitle id={headerId} text={title} path={path} openDialog={openDialog} />
-      </>
+      <SectionTitle id={headerId} keepBleed={keepBleed} iconName={iconName} text={title} path={path} openDialog={openDialog} />
     );
   };
 
