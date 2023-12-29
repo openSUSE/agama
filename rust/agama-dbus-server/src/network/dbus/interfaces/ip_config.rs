@@ -9,13 +9,14 @@ use crate::network::{
     error::NetworkStateError,
     model::{IpConfig, Ipv4Method, Ipv6Method},
 };
+use agama_lib::dbus::OwnedHash;
 use async_trait::async_trait;
 use cidr::IpInet;
 use std::{net::IpAddr, sync::Arc};
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::{Mutex, MutexGuard};
 use uuid::Uuid;
-use zbus::dbus_interface;
+use zbus::{dbus_interface, SignalContext};
 
 use super::common::ConnectionInterface;
 
@@ -164,12 +165,31 @@ impl Ip {
         let gateway = helpers::parse_gateway(gateway)?;
         self.update_ip_config(|ip| ip.gateway6 = gateway).await
     }
+
+    pub async fn update(
+        &mut self,
+        data: OwnedHash,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) -> zbus::fdo::Result<()> {
+        let ip_config = helpers::from_dbus(data).unwrap();
+        self.update_connection(|c| c.ip_config = ip_config).await?;
+
+        _ = Self::method4_changed(self, &ctxt).await;
+        _ = Self::method6_changed(self, &ctxt).await;
+        _ = Self::gateway4_changed(self, &ctxt).await;
+        _ = Self::gateway6_changed(self, &ctxt).await;
+        _ = Self::nameservers_changed(self, &ctxt).await;
+        _ = Self::addresses_changed(self, &ctxt).await;
+        Ok(())
+    }
 }
 
 mod helpers {
-    use crate::network::error::NetworkStateError;
+    use crate::network::{error::NetworkStateError, model::IpConfig};
+    use agama_lib::dbus::OwnedHash;
     use log;
     use std::{
+        error::Error,
         fmt::{Debug, Display},
         str::FromStr,
     };
@@ -211,6 +231,47 @@ mod helpers {
                 .map_err(|_| NetworkStateError::InvalidIpAddr(gateway))?;
             Ok(Some(parsed))
         }
+    }
+
+    // TODO: proper error handling
+    pub fn from_dbus(data: OwnedHash) -> Result<IpConfig, Box<dyn Error>> {
+        let mut ip_config = IpConfig::default();
+        if let Some(method4) = data.get("Method4") {
+            let method4: &str = method4.downcast_ref().unwrap();
+            ip_config.method4 = method4.parse()?;
+        }
+
+        if let Some(method6) = data.get("Method6") {
+            let method6: &str = method6.downcast_ref().unwrap();
+            ip_config.method6 = method6.parse()?;
+        }
+
+        if let Some(gateway4) = data.get("Gateway4") {
+            let gateway4: &str = gateway4.downcast_ref().unwrap();
+            ip_config.gateway4 = gateway4.parse().ok();
+        }
+
+        if let Some(gateway6) = data.get("Gateway6") {
+            let gateway6: &str = gateway6.downcast_ref().unwrap();
+            ip_config.gateway6 = gateway6.parse().ok();
+        }
+
+        if let Some(nameservers) = data.get("Nameservers") {
+            let namesevers = nameservers.downcast_ref::<zbus::zvariant::Array>().unwrap();
+            for ns in namesevers.get() {
+                let ns: &str = ns.downcast_ref().unwrap();
+                ip_config.nameservers.push(ns.parse().unwrap())
+            }
+        }
+
+        if let Some(addresses) = data.get("Addresses") {
+            let addresses = addresses.downcast_ref::<zbus::zvariant::Array>().unwrap();
+            for addr in addresses.get() {
+                let addr: &str = addr.downcast_ref().unwrap();
+                ip_config.addresses.push(addr.parse().unwrap())
+            }
+        }
+        Ok(ip_config)
     }
 }
 

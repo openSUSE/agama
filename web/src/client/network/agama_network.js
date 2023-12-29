@@ -157,13 +157,16 @@ class AgamaNetworkAdapter {
     if (path === undefined) {
       return;
     }
-
     const { ipv4, wireless } = connection;
+
     const ipProxy = this.proxies.ipConfigs[path];
-    ipProxy.Method4 = ipv4.method;
-    ipProxy.Addresses = ipv4.addresses.map(addr => `${addr.address}/${addr.prefix}`);
-    ipProxy.Gateway4 = ipv4.gateway;
-    ipProxy.Nameservers = ipv4.nameServers;
+    const ipConfig = {
+      Method4: cockpit.variant("s", ipv4.method),
+      Addresses: cockpit.variant("as", ipv4.addresses.map(a => `${a.address}/${a.prefix}`)),
+      Gateway4: cockpit.variant("s", ipv4.gateway),
+      Nameservers: cockpit.variant("as", ipv4.nameServers)
+    };
+    await ipProxy.Update(ipConfig);
 
     if (wireless) {
       const wirelessProxy = this.proxies.wireless[path];
