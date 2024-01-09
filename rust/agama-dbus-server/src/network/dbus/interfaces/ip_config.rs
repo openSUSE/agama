@@ -174,6 +174,7 @@ impl Ip {
         let ip_config = helpers::from_dbus(data).unwrap();
         self.update_connection(|c| c.ip_config = ip_config).await?;
 
+        // TODO: replace with a call to `zbus::fdo::Properties::properties_changed`
         _ = Self::method4_changed(self, &ctxt).await;
         _ = Self::method6_changed(self, &ctxt).await;
         _ = Self::gateway4_changed(self, &ctxt).await;
