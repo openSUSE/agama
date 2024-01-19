@@ -6,6 +6,7 @@ members = [
   "agama-lib",
   "agama-locale-data",
   "agama-settings",
+  "agama-web-server",
 ]
 resolver = "2"
 
