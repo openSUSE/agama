@@ -1,4 +1,4 @@
-use crate::dbus::DBusArguments;
+use crate::{dbus::DBusArguments, error::AgamaServerError};
 
 use super::dbus::DBusClient;
 use axum::{
@@ -22,7 +22,9 @@ pub struct GetProperty {
     pub property: String,
 }
 
-pub async fn get_property(Json(payload): Json<GetProperty>) -> impl IntoResponse {
+pub async fn get_property(
+    Json(payload): Json<GetProperty>,
+) -> Result<impl IntoResponse, AgamaServerError> {
     let client = DBusClient::with_default_connection().await;
     let msg = client
         .get_property(
@@ -32,9 +34,9 @@ pub async fn get_property(Json(payload): Json<GetProperty>) -> impl IntoResponse
             &payload.property,
         )
         .await;
-    let body: zvariant::Structure = msg.body().unwrap();
-    let body = serde_json::to_string(&body).unwrap();
-    ([(header::CONTENT_TYPE, "application/json")], body)
+    let body: zvariant::Structure = msg.body()?;
+    let body = serde_json::to_string(&body)?;
+    Ok(([(header::CONTENT_TYPE, "application/json")], body))
 }
 
 #[derive(Deserialize)]
@@ -69,7 +71,9 @@ pub struct CallMethod {
     pub args: Option<DBusArguments>,
 }
 
-pub async fn call_dbus(Json(payload): Json<CallMethod>) -> impl IntoResponse {
+pub async fn call_dbus(
+    Json(payload): Json<CallMethod>,
+) -> Result<impl IntoResponse, AgamaServerError> {
     let client = DBusClient::with_default_connection().await;
     let msg = match &payload.args {
         Some(args) => {
@@ -97,7 +101,7 @@ pub async fn call_dbus(Json(payload): Json<CallMethod>) -> impl IntoResponse {
         }
     };
 
-    let body: zvariant::Structure = msg.body().unwrap();
-    let body = serde_json::to_string(&body).unwrap();
-    ([(header::CONTENT_TYPE, "application/json")], body)
+    let body: zvariant::Structure = msg.body()?;
+    let body = serde_json::to_string(&body)?;
+    Ok(([(header::CONTENT_TYPE, "application/json")], body))
 }

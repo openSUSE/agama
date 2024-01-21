@@ -4,6 +4,7 @@ use axum::{
 };
 
 mod dbus;
+mod error;
 mod handlers;
 
 #[tokio::main]
