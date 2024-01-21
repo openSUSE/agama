@@ -1,10 +1,12 @@
+use crate::dbus::DBusArguments;
+
 use super::dbus::DBusClient;
 use axum::{
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use zbus::zvariant;
 
@@ -58,24 +60,43 @@ pub async fn set_property(Json(payload): Json<SetProperty>) -> impl IntoResponse
     StatusCode::OK
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CallMethod {
     pub service: String,
     pub path: String,
     pub iface: String,
     pub method: String,
+    pub args: Option<DBusArguments>,
 }
 
 pub async fn call_dbus(Json(payload): Json<CallMethod>) -> impl IntoResponse {
     let client = DBusClient::with_default_connection().await;
-    let msg = client
-        .call_method(
-            &payload.service,
-            &payload.path,
-            &payload.iface,
-            &payload.method,
-        )
-        .await;
+    let msg = match &payload.args {
+        Some(args) => {
+            let structure = args.to_zvariant_structure();
+            client
+                .call_method(
+                    &payload.service,
+                    &payload.path,
+                    &payload.iface,
+                    &payload.method,
+                    &structure,
+                )
+                .await
+        }
+        None => {
+            client
+                .call_method(
+                    &payload.service,
+                    &payload.path,
+                    &payload.iface,
+                    &payload.method,
+                    &(),
+                )
+                .await
+        }
+    };
+
     let body: zvariant::Structure = msg.body().unwrap();
     let body = serde_json::to_string(&body).unwrap();
     ([(header::CONTENT_TYPE, "application/json")], body)
