@@ -1,0 +1,23 @@
+{
+  "service": "org.opensuse.Agama.Manager1",
+  "path": "/org/opensuse/Agama/Users1",
+  "iface": "org.opensuse.Agama.Users1",
+  "method": "SetFirstUser",
+  "args": [
+    {
+      "Str": "name"
+    },
+    {
+      "Str": "user"
+    },
+    {
+      "Str": "password"
+    },
+    {
+      "Boolean": true
+    },
+    {
+      "Dict": {}
+    }
+  ]
+}

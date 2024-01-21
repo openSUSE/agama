@@ -1,0 +1,19 @@
+{
+  "service": "org.opensuse.Agama1",
+  "path": "/org/opensuse/Agama1/Locale",
+  "iface": "org.freedesktop.DBus.Properties",
+  "method": "Set",
+  "args": [
+    {
+      "Str": "org.opensuse.Agama1.Locale"
+    },
+    {
+      "Str": "UILocale"
+    },
+    {
+      "Variant": {
+        "Str": "es_ES.UTF-8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "service": "org.opensuse.Agama1",
+  "path": "/org/opensuse/Agama1/Locale",
+  "iface": "org.opensuse.Agama1.Locale",
+  "method": "ListLocales"
+}

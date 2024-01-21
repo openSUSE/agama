@@ -1,0 +1,10 @@
+{
+  "service": "org.opensuse.Agama1",
+  "path": "/org/opensuse/Agama1/Locale",
+  "iface": "org.opensuse.Agama1.Locale",
+  "property": "UILocale",
+  "value": {
+    "zvariant::value::Signature": "s",
+    "zvariant::value::Value": "es_ES.UTF-8"
+  }
+}

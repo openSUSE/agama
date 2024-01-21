@@ -1,0 +1,6 @@
+{
+  "service": "org.opensuse.Agama.Manager1",
+  "path": "/org/opensuse/Agama/Users1",
+  "iface": "org.opensuse.Agama.Users1",
+  "property": "FirstUser"
+}
