@@ -1,7 +1,9 @@
 use axum::{
+    http::Method,
     routing::{get, put},
     Router,
 };
+use tower_http::cors::{Any, CorsLayer};
 
 mod dbus;
 mod error;
@@ -9,6 +11,11 @@ mod handlers;
 
 #[tokio::main]
 async fn main() {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::PUT, Method::OPTIONS, Method::HEAD])
+        .allow_headers([axum::http::header::CONTENT_TYPE]);
+
     let app = Router::new()
         .route("/ping", get(handlers::ping))
         .route("/dbus/call", put(handlers::call_dbus))
@@ -16,7 +23,8 @@ async fn main() {
             "/dbus/properties",
             get(handlers::get_property).put(handlers::set_property),
         )
-        .route("/products", get(handlers::get_products));
+        .route("/products", get(handlers::get_products))
+        .layer(cors);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9091").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
