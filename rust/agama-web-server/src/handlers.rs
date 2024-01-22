@@ -1,4 +1,8 @@
 use crate::{dbus::DBusArguments, error::AgamaServerError};
+use agama_lib::{
+    connection,
+    product::{Product, ProductClient},
+};
 
 use super::dbus::DBusClient;
 use axum::{
@@ -104,4 +108,10 @@ pub async fn call_dbus(
     let body: zvariant::Structure = msg.body()?;
     let body = serde_json::to_string(&body)?;
     Ok(([(header::CONTENT_TYPE, "application/json")], body))
+}
+
+pub async fn get_products() -> Result<Json<Vec<Product>>, AgamaServerError> {
+    let conn = connection().await?;
+    let client = ProductClient::new(conn).await?;
+    Ok(Json(client.products().await?))
 }

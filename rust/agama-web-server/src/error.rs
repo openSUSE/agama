@@ -1,3 +1,4 @@
+use agama_lib::error::ServiceError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -7,9 +8,11 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum AgamaServerError {
     #[error("D-Bus conversion error: {0}")]
-    DBusConversionError(#[from] zbus::Error),
+    DBusConversion(#[from] zbus::Error),
     #[error("JSON conversion error: {0}")]
-    JsonConversionError(#[from] serde_json::Error),
+    JsonConversion(#[from] serde_json::Error),
+    #[error("D-Bus connection error: {0}")]
+    DBus(#[from] ServiceError),
 }
 
 impl IntoResponse for AgamaServerError {
