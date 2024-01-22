@@ -1,18 +1,22 @@
+use super::dbus::DBusClient;
 use crate::{dbus::DBusArguments, error::AgamaServerError};
 use agama_lib::{
     connection,
     product::{Product, ProductClient},
 };
-
-use super::dbus::DBusClient;
 use axum::{
+    extract::{
+        ws::{Message, WebSocket},
+        WebSocketUpgrade,
+    },
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
 };
+use futures_util::StreamExt;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use zbus::zvariant;
+use zbus::{zvariant, MatchRule, MessageStream};
 
 pub async fn ping() -> Json<Value> {
     Json(json!({ "status": "ok" }))
@@ -114,4 +118,25 @@ pub async fn get_products() -> Result<Json<Vec<Product>>, AgamaServerError> {
     let conn = connection().await?;
     let client = ProductClient::new(conn).await?;
     Ok(Json(client.products().await?))
+}
+
+pub async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
+    ws.on_upgrade(handle_socket)
+}
+
+pub async fn handle_socket(mut socket: WebSocket) {
+    let rule = MatchRule::builder()
+        .msg_type(zbus::MessageType::Signal)
+        .build();
+    let conn = connection().await.unwrap();
+    let mut stream = MessageStream::for_match_rule(rule, &conn, Some(10))
+        .await
+        .unwrap();
+
+    while let Some(msg) = stream.next().await {
+        let msg = msg.unwrap();
+        let body: zbus::zvariant::Structure = msg.body().unwrap();
+        let payload = serde_json::to_string(&body).unwrap();
+        _ = socket.send(Message::Text(payload)).await;
+    }
 }
