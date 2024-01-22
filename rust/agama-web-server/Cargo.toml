@@ -19,4 +19,6 @@ tokio = { version = "1.35.1", features = [
   "rt-multi-thread",
 ] }
 tower-http = { version = "0.5.1", features = ["trace", "cors", "fs"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 zbus = { version = "3.14.1", features = ["tokio"] }

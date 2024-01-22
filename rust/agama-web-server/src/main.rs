@@ -6,7 +6,9 @@ use axum::{
 use tower_http::{
     cors::{Any, CorsLayer},
     services::ServeDir,
+    trace::TraceLayer,
 };
+use tracing_subscriber::EnvFilter;
 
 mod dbus;
 mod error;
@@ -18,8 +20,12 @@ async fn main() {
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::PUT, Method::OPTIONS, Method::HEAD])
         .allow_headers([axum::http::header::CONTENT_TYPE]);
-
     let serve_dir = ServeDir::new("assets").append_index_html_on_directories(true);
+
+    let trace = TraceLayer::new_for_http();
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "debug".into()))
+        .init();
 
     let app = Router::new()
         .fallback_service(serve_dir)
@@ -31,7 +37,10 @@ async fn main() {
         )
         .route("/products", get(handlers::get_products))
         .route("/ws", get(handlers::ws_handler))
-        .layer(cors);
+        .layer(cors)
+        .layer(trace);
+
+    tracing::debug!("Listening on http://127.0.0.1:3000");
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
