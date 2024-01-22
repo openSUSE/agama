@@ -18,5 +18,5 @@ tokio = { version = "1.35.1", features = [
   "macros",
   "rt-multi-thread",
 ] }
-tower-http = { version = "0.5.1", features = ["trace", "cors"] }
+tower-http = { version = "0.5.1", features = ["trace", "cors", "fs"] }
 zbus = { version = "3.14.1", features = ["tokio"] }
