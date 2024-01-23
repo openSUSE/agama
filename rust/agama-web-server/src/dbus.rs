@@ -1,4 +1,3 @@
-use agama_lib::connection;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use zbus::zvariant::{self, DynamicType};
@@ -8,10 +7,8 @@ pub struct DBusClient {
 }
 
 impl DBusClient {
-    pub async fn with_default_connection() -> Self {
-        Self {
-            connection: connection().await.unwrap(),
-        }
+    pub fn new(connection: zbus::Connection) -> Self {
+        Self { connection }
     }
 
     pub async fn call_method<B>(

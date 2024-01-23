@@ -1,3 +1,4 @@
+use agama_lib::connection;
 use axum::{
     http::Method,
     routing::{get, put},
@@ -14,6 +15,11 @@ mod dbus;
 mod error;
 mod handlers;
 
+#[derive(Clone)]
+struct AppState {
+    pub connection: zbus::Connection,
+}
+
 #[tokio::main]
 async fn main() {
     let cors = CorsLayer::new()
@@ -27,6 +33,12 @@ async fn main() {
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "debug".into()))
         .init();
 
+    let app_state = AppState {
+        connection: connection()
+            .await
+            .expect("Could not connect to the D-Bus server."),
+    };
+
     let app = Router::new()
         .fallback_service(serve_dir)
         .route("/ping", get(handlers::ping))
@@ -38,7 +50,8 @@ async fn main() {
         .route("/products", get(handlers::get_products))
         .route("/ws", get(handlers::ws_handler))
         .layer(cors)
-        .layer(trace);
+        .layer(trace)
+        .with_state(app_state);
 
     tracing::debug!("Listening on http://127.0.0.1:3000");
 

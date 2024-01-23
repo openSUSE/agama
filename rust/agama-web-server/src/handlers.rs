@@ -1,13 +1,10 @@
 use super::dbus::DBusClient;
-use crate::{dbus::DBusArguments, error::AgamaServerError};
-use agama_lib::{
-    connection,
-    product::{Product, ProductClient},
-};
+use crate::{dbus::DBusArguments, error::AgamaServerError, AppState};
+use agama_lib::product::{Product, ProductClient};
 use axum::{
     extract::{
         ws::{Message, WebSocket},
-        WebSocketUpgrade,
+        State, WebSocketUpgrade,
     },
     http::{header, StatusCode},
     response::IntoResponse,
@@ -31,9 +28,10 @@ pub struct GetProperty {
 }
 
 pub async fn get_property(
+    State(state): State<AppState>,
     Json(payload): Json<GetProperty>,
 ) -> Result<impl IntoResponse, AgamaServerError> {
-    let client = DBusClient::with_default_connection().await;
+    let client = DBusClient::new(state.connection);
     let msg = client
         .get_property(
             &payload.service,
@@ -56,8 +54,11 @@ pub struct SetProperty {
     pub value: zvariant::OwnedValue,
 }
 
-pub async fn set_property(Json(payload): Json<SetProperty>) -> impl IntoResponse {
-    let client = DBusClient::with_default_connection().await;
+pub async fn set_property(
+    State(state): State<AppState>,
+    Json(payload): Json<SetProperty>,
+) -> impl IntoResponse {
+    let client = DBusClient::new(state.connection);
     client
         .set_property(
             &payload.service,
@@ -80,9 +81,10 @@ pub struct CallMethod {
 }
 
 pub async fn call_dbus(
+    State(state): State<AppState>,
     Json(payload): Json<CallMethod>,
 ) -> Result<impl IntoResponse, AgamaServerError> {
-    let client = DBusClient::with_default_connection().await;
+    let client = DBusClient::new(state.connection);
     let msg = match &payload.args {
         Some(args) => {
             let structure = args.to_zvariant_structure();
@@ -114,22 +116,22 @@ pub async fn call_dbus(
     Ok(([(header::CONTENT_TYPE, "application/json")], body))
 }
 
-pub async fn get_products() -> Result<Json<Vec<Product>>, AgamaServerError> {
-    let conn = connection().await?;
-    let client = ProductClient::new(conn).await?;
+pub async fn get_products(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Product>>, AgamaServerError> {
+    let client = ProductClient::new(state.connection).await?;
     Ok(Json(client.products().await?))
 }
 
-pub async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
-    ws.on_upgrade(handle_socket)
+pub async fn ws_handler(State(state): State<AppState>, ws: WebSocketUpgrade) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_socket(socket, state.connection))
 }
 
-pub async fn handle_socket(mut socket: WebSocket) {
+pub async fn handle_socket(mut socket: WebSocket, connection: zbus::Connection) {
     let rule = MatchRule::builder()
         .msg_type(zbus::MessageType::Signal)
         .build();
-    let conn = connection().await.unwrap();
-    let mut stream = MessageStream::for_match_rule(rule, &conn, Some(10))
+    let mut stream = MessageStream::for_match_rule(rule, &connection, Some(10))
         .await
         .unwrap();
 
