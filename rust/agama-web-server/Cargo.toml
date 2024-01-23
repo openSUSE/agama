@@ -8,6 +8,7 @@ edition.workspace = true
 
 [dependencies]
 agama-lib = { path = "../agama-lib" }
+async-trait = "0.1.77"
 axum = { version = "0.7.4", features = ["ws"] }
 futures-util = "0.3.30"
 serde = { version = "1.0.195", features = ["derive"] }

@@ -1,6 +1,10 @@
 use super::dbus::DBusClient;
 use crate::{dbus::DBusArguments, error::AgamaServerError, AppState};
-use agama_lib::product::{Product, ProductClient};
+use agama_lib::{
+    product::{Product, ProductClient},
+    progress::{Progress, ProgressMonitor, ProgressPresenter},
+};
+use async_trait::async_trait;
 use axum::{
     extract::{
         ws::{Message, WebSocket},
@@ -127,18 +131,40 @@ pub async fn ws_handler(State(state): State<AppState>, ws: WebSocketUpgrade) -> 
     ws.on_upgrade(move |socket| handle_socket(socket, state.connection))
 }
 
-pub async fn handle_socket(mut socket: WebSocket, connection: zbus::Connection) {
-    let rule = MatchRule::builder()
-        .msg_type(zbus::MessageType::Signal)
-        .build();
-    let mut stream = MessageStream::for_match_rule(rule, &connection, Some(10))
-        .await
-        .unwrap();
+pub async fn handle_socket(socket: WebSocket, connection: zbus::Connection) {
+    let presenter = SocketProgressPresenter::new(socket);
+    let mut monitor = ProgressMonitor::new(connection).await.unwrap();
+    _ = monitor.run(presenter).await;
+}
 
-    while let Some(msg) = stream.next().await {
-        let msg = msg.unwrap();
-        let body: zbus::zvariant::Structure = msg.body().unwrap();
-        let payload = serde_json::to_string(&body).unwrap();
-        _ = socket.send(Message::Text(payload)).await;
+struct SocketProgressPresenter {
+    socket: WebSocket,
+}
+
+impl SocketProgressPresenter {
+    pub fn new(socket: WebSocket) -> Self {
+        Self { socket }
     }
+
+    pub async fn report_progress(&mut self, progress: &Progress) {
+        let payload = serde_json::to_string(&progress).unwrap();
+        _ = self.socket.send(Message::Text(payload)).await;
+    }
+}
+
+#[async_trait]
+impl ProgressPresenter for SocketProgressPresenter {
+    async fn start(&mut self, progress: &Progress) {
+        self.report_progress(progress).await;
+    }
+
+    async fn update_main(&mut self, progress: &Progress) {
+        self.report_progress(progress).await;
+    }
+
+    async fn update_detail(&mut self, progress: &Progress) {
+        self.report_progress(progress).await;
+    }
+
+    async fn finish(&mut self) {}
 }
