@@ -110,6 +110,7 @@ impl<'a> NetworkClient<'a> {
             "" => None,
             value => Some(value.to_string()),
         };
+        let mtu = connection_proxy.mtu().await?;
 
         let ip_proxy = IPProxy::builder(&self.connection)
             .path(path)?
@@ -135,6 +136,7 @@ impl<'a> NetworkClient<'a> {
             nameservers,
             interface,
             mac_address,
+            mtu,
             ..Default::default()
         })
     }
@@ -256,6 +258,8 @@ impl<'a> NetworkClient<'a> {
 
         let mac_address = conn.mac_address.as_deref().unwrap_or("");
         proxy.set_mac_address(mac_address).await?;
+
+        proxy.set_mtu(conn.mtu).await?;
 
         self.update_ip_settings(path, conn).await?;
 

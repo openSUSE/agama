@@ -225,6 +225,19 @@ impl Connection {
         .await?;
         Ok(())
     }
+
+    /// Connection MTU.
+    #[dbus_interface(property)]
+    pub async fn mtu(&self) -> zbus::fdo::Result<u32> {
+        let connection = self.get_connection().await?;
+        Ok(connection.mtu)
+    }
+
+    #[dbus_interface(property)]
+    pub async fn set_mtu(&mut self, mtu: u32) -> zbus::fdo::Result<()> {
+        self.update_connection(|c| c.mtu = mtu).await?;
+        Ok(())
+    }
 }
 
 #[async_trait]

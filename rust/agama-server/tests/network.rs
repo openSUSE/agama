@@ -69,6 +69,7 @@ async fn test_add_connection() -> Result<(), Box<dyn Error>> {
     let wlan0 = settings::NetworkConnection {
         id: "wlan0".to_string(),
         mac_address: Some("FD:CB:A9:87:65:43".to_string()),
+        mtu: 1900_u32,
         method4: Some("auto".to_string()),
         method6: Some("disabled".to_string()),
         addresses: addresses.clone(),
@@ -88,6 +89,7 @@ async fn test_add_connection() -> Result<(), Box<dyn Error>> {
     let conn = conns.first().unwrap();
     assert_eq!(conn.id, "wlan0");
     assert_eq!(conn.mac_address, Some("FD:CB:A9:87:65:43".to_string()));
+    assert_eq!(conn.mtu, 1900_u32);
     assert_eq!(conn.device_type(), DeviceType::Wireless);
     assert_eq!(&conn.addresses, &addresses);
     let method4 = conn.method4.as_ref().unwrap();
