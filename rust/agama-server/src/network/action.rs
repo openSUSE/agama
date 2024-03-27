@@ -22,12 +22,11 @@ pub enum Action {
         Responder<Result<OwnedObjectPath, NetworkStateError>>,
     ),
     /// Add a new connection
-    NewConnection(
-        Connection,
-        Responder<Result<OwnedObjectPath, NetworkStateError>>,
-    ),
+    NewConnection(Connection, Responder<Result<(), NetworkStateError>>),
+    /// Gets a connection by its id
+    GetConnection(String, Responder<Option<Connection>>),
     /// Gets a connection by its Uuid
-    GetConnection(Uuid, Responder<Option<Connection>>),
+    GetConnectionByUuid(Uuid, Responder<Option<Connection>>),
     /// Gets a connection
     GetConnections(Responder<Vec<Connection>>),
     /// Gets a connection path
@@ -66,7 +65,7 @@ pub enum Action {
     /// Forces a wireless networks scan refresh
     RefreshScan(Responder<Result<(), NetworkAdapterError>>),
     /// Remove the connection with the given Uuid.
-    RemoveConnection(Uuid, Responder<Result<(), NetworkStateError>>),
+    RemoveConnection(String, Responder<Result<(), NetworkStateError>>),
     /// Apply the current configuration.
     Apply(Responder<Result<(), NetworkAdapterError>>),
 }
