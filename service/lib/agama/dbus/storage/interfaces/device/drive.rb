@@ -85,6 +85,9 @@ module Agama
             #
             # @return [String]
             def drive_bus
+              # FIXME: not sure how robust this is (is the value always in English?)
+              return "" if storage_device.bus.casecmp?("none")
+
               storage_device.bus || ""
             end
 
@@ -110,7 +113,15 @@ module Agama
             def drive_transport
               return "" unless storage_device.respond_to?(:transport)
 
-              storage_device.transport.to_s
+              transport = storage_device.transport
+              return "" if transport.is?(:unknown)
+
+              # FIXME: transport does not have proper i18n support at yast2-storage-ng, so we are
+              # just duplicating some logic from yast2-storage-ng here
+              return "USB" if transport.is?(:usb)
+              return "IEEE 1394" if transport.is?(:sbp)
+
+              transport.to_s
             end
 
             # More info about the device
