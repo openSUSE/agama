@@ -27,7 +27,6 @@ import { toValidationError, useCancellablePromise } from "~/utils";
 import { Page } from "~/components/core";
 import {
   ProposalPageMenu,
-  ProposalDeviceSection,
   ProposalTransactionalInfo,
   ProposalSettingsSection,
   ProposalResultSection
@@ -222,12 +221,6 @@ export default function ProposalPage() {
       <ProposalPageMenu />
       <ProposalTransactionalInfo
         settings={state.settings}
-      />
-      <ProposalDeviceSection
-        settings={state.settings}
-        availableDevices={state.availableDevices}
-        isLoading={state.loading}
-        onChange={changeSettings}
       />
       <ProposalSettingsSection
         availableDevices={state.availableDevices}

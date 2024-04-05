@@ -152,12 +152,11 @@ version of the system after configuration changes or software upgrades.");
     <div>
       <Switch
         id="snapshots"
-        label={_("Use Btrfs Snapshots")}
-        isReversed
+        label={_("Btrfs Snapshots")}
         isChecked={isChecked}
         onChange={switchState}
       />
-      <div>
+      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)", marginBlockStart: "var(--spacer-smaller)" }}>
         {explanation}
       </div>
     </div>
@@ -218,18 +217,11 @@ const EncryptionField = ({
     }
   };
 
-  const ChangeSettingsButton = () => {
+  const ChangeSettingsButton = ({ isDisabled }) => {
     return (
-      <Tooltip
-        content={_("Change encryption settings")}
-        entryDelay={400}
-        exitDelay={50}
-        position="right"
-      >
-        <button aria-label={_("Encryption settings")} className="plain-control" onClick={openForm}>
-          <Icon name="tune" size="s" />
-        </button>
-      </Tooltip>
+      <Button isDisabled={isDisabled || undefined} variant="link" isInline onClick={openForm}>
+        { _("Change encryption settings") }
+      </Button>
     );
   };
 
@@ -237,16 +229,19 @@ const EncryptionField = ({
 
   return (
     <>
-      <div className="split">
+      <div>
         <Switch
           id="encryption"
-          label={_("Use encryption")}
-          isReversed
+          label={_("Encryption")}
           isChecked={isChecked}
           onChange={changeSelected}
         />
-        { isChecked && <ChangeSettingsButton /> }
+
+        <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)", marginBlockStart: "var(--spacer-small)" }}>
+          <ChangeSettingsButton isDisabled={!isChecked} />
+        </div>
       </div>
+
       <Popup aria-label={_("Encryption settings")} title={_("Encryption settings")} isOpen={isFormOpen}>
         <EncryptionSettingsForm
           id="encryptionSettingsForm"
@@ -300,25 +295,37 @@ const BootConfigField = ({
     onChange({ configureBoot, bootDevice });
   };
 
-  const label = _("Automatically configure any additional partition to boot the system");
+  const label = _("Boot partition");
+  let value;
 
-  const value = () => {
-    if (!configureBoot) return _("nowhere (manual boot setup)");
-
-    if (!bootDevice) return _("at the installation device");
-
-    // TRANSLATORS: %s is the disk used to configure the boot-related partitions (eg. "/dev/sda, 80 GiB)
-    return sprintf(_("at %s"), deviceLabel(bootDevice));
-  };
+  if (!configureBoot) {
+    value = _("none (manual boot setup)");
+  } else if (!bootDevice) {
+    value = _("at the installation device");
+  } else {
+    value = sprintf(_("at %s"), deviceLabel(bootDevice));
+  }
 
   if (isLoading) {
     return <Skeleton screenreaderText={_("Waiting for information about boot config")} width="25%" />;
   }
 
   return (
-    <div className="split">
-      <span>{label}</span>
-      <Button variant="link" isInline onClick={openDialog}>{value()}</Button>
+    <div>
+      <div className="agama-field">
+        <Tooltip content={_("Change boot device")} aria="labelledby">
+          <button className="plain-control" onClick={openDialog}>
+            <Icon name="settings" />
+          </button>
+        </Tooltip>
+        <span><b>{label}</b> {value}</span>
+      </div>
+      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
+        {_(
+          "To ensure the new system is able to boot, the installer may need to create or configure some \
+          partitions in the appropriate disk."
+        )}
+      </div>
       <If
         condition={isDialogOpen}
         then={
@@ -475,7 +482,40 @@ export default function ProposalSettingsSection({
 
   return (
     <>
-      <Section title={_("Settings")}>
+      <Section title="Proposal">
+        {/* <div className="subheader"> */}
+        {/*   <span>{_("Settings")}</span> */}
+        {/* </div> */}
+        {/**/}
+        <div>
+          <div className="agama-field">
+            <Tooltip content={_("Change instalaltion device")} aria="labelledby">
+              <button className="plain-control">
+                <Icon name="settings" />
+              </button>
+            </Tooltip>
+            <span><b>{_("Installation device")}</b> {_("/dev/vdc")}</span>
+          </div>
+          <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
+            <span
+              dangerouslySetInnerHTML={{
+                // TRANSLATORS: The storage "Device" sections's description. Do not
+                // translate 'abbr' and 'title', they are part of the HTML markup.
+                __html: _("Select the main disk or <abbr title='Logical Volume Manager'>LVM</abbr> \
+        Volume Group for installation.")
+              }}
+            />
+          </div>
+        </div>
+
+        <BootConfigField
+          configureBoot={settings.configureBoot}
+          bootDevice={bootDevice}
+          defaultBootDevice={defaultBootDevice}
+          devices={availableDevices}
+          isLoading={isLoading}
+          onChange={changeBoot}
+        />
         <SnapshotsField
           settings={settings}
           onChange={changeBtrfsSnapshots}
@@ -488,6 +528,7 @@ export default function ProposalSettingsSection({
           isLoading={settings.encryptionPassword === undefined}
           onChange={changeEncryption}
         />
+
         <ProposalVolumes
           volumes={volumes}
           templates={usefulTemplates()}
@@ -495,14 +536,7 @@ export default function ProposalSettingsSection({
           isLoading={isLoading && settings.volumes === undefined}
           onChange={changeVolumes}
         />
-        <BootConfigField
-          configureBoot={settings.configureBoot}
-          bootDevice={bootDevice}
-          defaultBootDevice={defaultBootDevice}
-          devices={availableDevices}
-          isLoading={isLoading}
-          onChange={changeBoot}
-        />
+
         <SpacePolicyField
           policy={spacePolicy}
           actions={spaceActions}

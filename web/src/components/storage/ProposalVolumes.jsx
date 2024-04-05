@@ -21,11 +21,10 @@
 
 import React, { useState } from "react";
 import {
-  Dropdown, DropdownItem, DropdownList,
+  Button,
   List, ListItem,
-  MenuToggle,
   Skeleton,
-  Toolbar, ToolbarContent, ToolbarItem
+  Tooltip
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { sprintf } from "sprintf-js";
@@ -90,7 +89,6 @@ const AutoCalculatedHint = (volume) => {
  * @return {void}
  */
 const GeneralActions = ({ templates, onAdd, onReset }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const openForm = () => setIsFormOpen(true);
@@ -102,45 +100,16 @@ const GeneralActions = ({ templates, onAdd, onReset }) => {
     onAdd(volume);
   };
 
-  const toggleActions = () => setIsOpen(!isOpen);
-
-  const closeActions = () => setIsOpen(false);
-
-  const Action = ({ children, ...props }) => (
-    <DropdownItem component="button" {...props}>{children}</DropdownItem>
-  );
-
   return (
-    <>
-      <Dropdown
-        isOpen={isOpen}
-        onSelect={closeActions}
-        popperProps={{ position: "right" }}
-        toggle={(toggleRef) => (
-          <MenuToggle ref={toggleRef} onClick={toggleActions} variant="primary">
-            {/* TRANSLATORS: dropdown label */}
-            {_("Actions")}
-          </MenuToggle>
-        )}
-      >
-        <DropdownList>
-          <Action
-            key="reset"
-            onClick={onReset}
-          >
-            {/* TRANSLATORS: dropdown menu label */}
-            {_("Reset to defaults")}
-          </Action>
-          <Action
-            key="add"
-            isDisabled={templates.length === 0}
-            onClick={openForm}
-          >
-            {/* TRANSLATORS: dropdown menu label */}
-            {_("Add file system")}
-          </Action>
-        </DropdownList>
-      </Dropdown>
+    <div className="split">
+      <Button isDisabled={templates.length === 0} onClick={openForm}>
+        {/* TRANSLATORS: dropdown menu label */}
+        {_("Add file system")}
+      </Button>
+      <Button variant="plain" onClick={onReset}>
+        {/* TRANSLATORS: dropdown menu label */}
+        {_("Reset to defaults")}
+      </Button>
       <Popup aria-label={_("Add file system")} title={_("Add file system")} isOpen={isFormOpen}>
         <VolumeForm
           id="addVolumeForm"
@@ -152,7 +121,31 @@ const GeneralActions = ({ templates, onAdd, onReset }) => {
           <Popup.Cancel onClick={closeForm} />
         </Popup.Actions>
       </Popup>
-    </>
+    </div>
+  );
+};
+
+const VolumeLabel = ({ volume, options }) => {
+  const snapshots = hasSnapshots(volume);
+  const transactional = isTransactionalRoot(volume);
+
+  // TRANSLATORS: the filesystem uses a logical volume (LVM)
+  const text = `${volume.fsType} ${options.lvm ? _("logical volume") : _("partition")}`;
+  const lockIcon = <Icon name="lock" size="xxxs" />;
+  const snapshotsIcon = <Icon name="add_a_photo" size="xxxs" />;
+  const transactionalIcon = <Icon name="sync" size="xxxs" />;
+
+  return (
+    <div className="split" style={{ background: "var(--color-gray)", padding: "var(--spacer-smaller) var(--spacer-small)", borderRadius: "var(--spacer-smaller)" }}>
+      <b>{volume.mountPath}</b>
+      <span>{text}</span>
+      {/* TRANSLATORS: filesystem flag, it uses an encryption */}
+      <If condition={options.encryption} then={<Em icon={lockIcon}>{_("encrypted")}</Em>} />
+      {/* TRANSLATORS: filesystem flag, it allows creating snapshots */}
+      <If condition={snapshots && !transactional} then={<Em icon={snapshotsIcon}>{_("with snapshots")}</Em>} />
+      {/* TRANSLATORS: flag for transactional file system  */}
+      <If condition={transactional} then={<Em icon={transactionalIcon}>{_("transactional")}</Em>} />
+    </div>
   );
 };
 
@@ -381,6 +374,42 @@ const VolumesTable = ({ volumes, options, isLoading, onVolumesChange }) => {
   );
 };
 
+const Basic = ({ volumes, options }) => {
+  return (
+    <div className="split">
+      { volumes.map((v, i) => <VolumeLabel key={i} volume={v} options={options} />) }
+    </div>
+  );
+};
+
+const Advanced = ({ volumes, options, templates, onChange }) => {
+  const addVolume = (volume) => {
+    if (onChange === noop) return;
+    const newVolumes = [...volumes, volume];
+    onChange(newVolumes);
+  };
+
+  const resetVolumes = () => {
+    if (onChange === noop) return;
+    onChange([]);
+  };
+
+  return (
+    <>
+      <VolumesTable
+        volumes={volumes}
+        options={options}
+        onVolumesChange={onChange}
+      />
+      <GeneralActions
+        templates={templates}
+        onAdd={addVolume}
+        onReset={resetVolumes}
+      />
+    </>
+  );
+};
+
 /**
  * Renders information of the volumes and actions to modify them
  * @component
@@ -407,39 +436,36 @@ export default function ProposalVolumes({
   isLoading = false,
   onChange = noop
 }) {
-  const addVolume = (volume) => {
-    if (onChange === noop) return;
-    const newVolumes = [...volumes, volume];
-    onChange(newVolumes);
-  };
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const resetVolumes = () => {
-    if (onChange === noop) return;
-    onChange([]);
-  };
+  console.log(isLoading);
+
+  const tooltipText = isExpanded ? _("See more") : _("See less");
+  const iconName = isExpanded ? "collapse_all" : "expand_all";
 
   return (
-    <>
-      <Toolbar>
-        <ToolbarContent>
-          <ToolbarItem>
-            {_("File systems to create")}
-          </ToolbarItem>
-          <ToolbarItem align={{ default: "alignRight" }}>
-            <GeneralActions
-              templates={templates}
-              onAdd={addVolume}
-              onReset={resetVolumes}
-            />
-          </ToolbarItem>
-        </ToolbarContent>
-      </Toolbar>
-      <VolumesTable
-        volumes={volumes}
-        options={options}
-        onVolumesChange={onChange}
-        isLoading={isLoading}
-      />
-    </>
+    <div>
+      <div className="agama-field">
+        <Tooltip content={tooltipText} aria="labelledby">
+          <button className="plain-control" onClick={() => setIsExpanded(!isExpanded)}>
+            <Icon name={iconName} />
+          </button>
+        </Tooltip>
+        <span><b>{_("File systems to create")}</b></span>
+      </div>
+      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
+        {_("Short explanation about File Systems, if needed")}
+      </div>
+      <div className="stack" style={{ marginBlockStart: "1ch", marginInlineStart: "calc(40px + 1ch)" }}>
+        <If
+          condition={isExpanded}
+          then={<Advanced volumes={volumes} options={options} templates={templates} onChange={onChange} /> }
+          else={<Basic volumes={volumes} options={options} /> }
+        />
+        <button className="plain-control" onClick={() => setIsExpanded(!isExpanded)}>
+          { isExpanded ? _("Switch to basic view") : _("Switch to advanced view") }
+        </button>
+      </div>
+    </div>
   );
 }

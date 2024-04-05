@@ -1,0 +1,278 @@
+/*
+ * Copyright (c) [2024] SUSE LLC
+ *
+ * All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of version 2 of the GNU General Public License as published
+ * by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, contact SUSE LLC.
+ *
+ * To contact SUSE LLC about this file by physical or electronic mail, you may
+ * find current contact information at www.suse.com.
+ */
+
+import React, { useState } from "react";
+import { Table, Thead, Tr, Th, Tbody, Td, ExpandableRowContent } from '@patternfly/react-table';
+
+const SelectorTable = ({
+  headers = [],
+  items = {},
+  itemIdKey = "name",
+  itemChildrenPath = "partitionTable.partitions",
+  isMultiple = false,
+  initialExpandedItems = [],
+  selected = [],
+  ...tableProps
+}) => {
+  const [selectedItems, setSelectedItems] = useState(selected);
+  const [expandedItems, setExpandedItems] = useState(initialExpandedItems);
+
+  console.log("selected items >>>", selectedItems);
+
+  const isItemExpanded = (itemKey) => expandedItems.includes(itemKey);
+  const isItemSelected = (item) => selectedItems.includes(item);
+  const toggleExpanded = (itemKey) => {
+    const nextState = isItemExpanded(itemKey) ? expandedItems.filter(key => key !== itemKey) : [...expandedItems, itemKey];
+    setExpandedItems(nextState);
+  };
+
+  const updateSelection = (item) => {
+    if (!isMultiple) {
+      setSelectedItems([item]);
+      return;
+    }
+
+    let nextSelection ;
+    if (isItemSelected(item)) {
+      console.log("item is", item);
+      nextSelection = selectedItems.filter(i => i !== item);
+    } else {
+      nextSelection = [...selectedItems, item]
+    }
+    setSelectedItems(nextSelection);
+  }
+
+  const TableHeader = () => (
+    <Thead>
+      <Tr>
+        <Th />
+        <Th />
+        { headers.map(h => <Th key={h.name}>{h.name}</Th>) }
+      </Tr>
+    </Thead>
+  );
+
+  // FIXME: move to util with a better name
+  const getValue = (parent, path) => (
+    path.split(".").reduce((value, key) => value && value[key], parent)
+  );
+
+  const renderItemRows = (item, parent, rowIndex) => {
+    const itemKey = item[itemIdKey];
+    const children = getValue(item, itemChildrenPath);
+    const expandProps = children && {
+      rowIndex,
+      isExpanded: isItemExpanded(itemKey),
+      onToggle: () => toggleExpanded(itemKey),
+      expandId: `expandable-${itemKey}`
+    };
+
+    const selectProps = {
+      rowIndex,
+      onSelect: () => updateSelection(item),
+      isSelected: isItemSelected(item),
+      variant: isMultiple ? "checkbox" : "radio"
+    };
+
+    const TdContentWrapper = ({ children: content }) => {
+      if (parent) return content;
+
+      return <ExpandableRowContent>{content}</ExpandableRowContent>;
+    }
+
+    // const rowProps = children && { isExpanded: isItemExpanded(itemKey) };
+
+    return (
+      <>
+        <Tr {...(children && { isExpaned: isItemExpanded(itemKey)})}>
+          <Td expand={expandProps} />
+          <Td select={selectProps} />
+          { headers.map(header => (
+            <Td key={header.key}>
+              <TdContentWrapper>{item[header.key]}</TdContentWrapper>
+            </Td>
+          ))}
+        </Tr>
+        { children?.map(child => renderItemRows(child, false, rowIndex)) }
+      </>
+    );
+  };
+
+  const renderItem = (item, rowIndex) => {
+    const itemKey = item[itemIdKey];
+
+    return (
+      <Tbody key={itemKey} isExpanded={isItemExpanded(itemKey)}>
+        { renderItemRows(item, true, rowIndex) }
+      </Tbody>
+    );
+  }
+
+  const TableBody = () => items.map((item, rowIndex) => renderItem(item, rowIndex));
+
+  return (
+    <Table {...tableProps}>
+      <TableHeader />
+      <TableBody />
+    </Table>
+  );
+}
+
+export const TableExpandable = () => {
+  const devices = [
+    {
+      name: "dev/sda",
+      description: "A device description",
+      size: "10GiB",
+      partitionTable: {
+        partitions: [
+          {
+            name: "dev/sda1",
+            description: "A device partition",
+            size: "8GiB",
+            partitionTable: {
+              partitions: [
+                {
+                  name: "dev/sdaaaaa1",
+                  description: "A device partition",
+                  size: "8GiB",
+
+                }
+              ]
+            }
+          },
+          {
+            name: "dev/sda2",
+            description: "A device partition",
+            size: "2GiB",
+
+          }
+        ]
+      }
+    },
+    {
+      name: "dev/sdb",
+      description: "Another device",
+      size: "80GiB",
+      partitionTable: {
+        partitions: [
+          {
+            name: "dev/sdb1",
+            description: "A device partition",
+            size: "8GiB",
+
+          },
+          {
+            name: "dev/sdb2",
+            description: "A device partition",
+            size: "2GiB",
+
+          }
+        ]
+      }
+
+    }
+  ];
+  const headers = [
+    { key: "name", name: "Device" },
+    { key: "description", name: "Description" },
+    { key: "size", name: "Size" }
+  ]
+  // const initialExpandedRepoNames = devices.filter(repo => !!repo.partitionTable).map(repo => repo.name);
+  // const [expandedRepoNames, setExpandedRepoNames] = React.useState(initialExpandedRepoNames);
+  // const [selectedDevice, setSelectedDevice] = React.useState("/dev/sdb");
+  // const setRepoExpanded = (repo, isExpanding = true) => setExpandedRepoNames(prevExpanded => {
+  //   const otherExpandedRepoNames = prevExpanded.filter(r => r !== repo.name);
+  //   return isExpanding ? [...otherExpandedRepoNames, repo.name] : otherExpandedRepoNames;
+  // });
+  // const isRepoExpanded = repo => expandedRepoNames.includes(repo.name);
+  //
+  return (
+    <SelectorTable isMultiple items={devices} headers={headers} />
+  );
+  // return (
+  //   <Table isCompact aria-label="Devices expandable table" className="device-selector-table">
+  //     <Thead>
+  //       <Tr>
+  //         <Th />
+  //         <Th />
+  //         <Th>{columnNames.device}</Th>
+  //         <Th>{columnNames.description}</Th>
+  //         <Th>{columnNames.size}</Th>
+  //       </Tr>
+  //     </Thead>
+  //     {devices.map((device, rowIndex) => (
+  //       <Tbody key={device.name} isExpanded={isRepoExpanded(device)}>
+  //         <Tr>
+  //           <Td expand={
+  //             device.partitionTable?.partitions
+  //               ? {
+  //                 rowIndex,
+  //                 isExpanded: isRepoExpanded(device),
+  //                 onToggle: () => setRepoExpanded(device, !isRepoExpanded(device)),
+  //                 expandId: 'composable-expandable-example'
+  //               }
+  //               : undefined
+  //           }
+  //           />
+  //           <Td select={
+  //             {
+  //               rowIndex,
+  //               onSelect: () => setSelectedDevice(device.name),
+  //               isSelected: selectedDevice === device.name,
+  //               variant: 'radio'
+  //             }
+  //           }
+  //           />
+  //           <Td dataLabel={columnNames.device}>{device.name}</Td>
+  //           <Td dataLabel={columnNames.description}>{device.description}</Td>
+  //           <Td dataLabel={columnNames.size}>{device.size}</Td>
+  //         </Tr>
+  //         {
+  //           device.partitionTable?.partitions.map((partition) => {
+  //             return (
+  //               <Tr isExpanded={isRepoExpanded(device)}>
+  //                 <Td />
+  //                 <Td select={
+  //                   {
+  //                     rowIndex,
+  //                     onSelect: () => setSelectedDevice(partition.name),
+  //                     isSelected: selectedDevice === partition.name,
+  //                     variant: 'radio'
+  //                   }
+  //                 }
+  //                 />
+  //                 <Td dataLabel={partition.name}><ExpandableRowContent>{partition.name}</ExpandableRowContent></Td>
+  //                 <Td dataLabel={partition.description}><ExpandableRowContent>{partition.description}</ExpandableRowContent></Td>
+  //                 <Td dataLabel={partition.size}><ExpandableRowContent>{partition.size}</ExpandableRowContent></Td>
+  //               </Tr>
+  //             )
+  //           })
+  //         }
+  //       </Tbody>
+  //     ))}
+  //   </Table>
+  // );
+};
+
+export default function DeviceSelectorTable({}) {
+  return <TableExpandable />;
+}

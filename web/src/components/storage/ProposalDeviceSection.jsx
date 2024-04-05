@@ -25,12 +25,14 @@ import React, { useState } from "react";
 import {
   Button,
   Skeleton,
+  Tooltip
 } from "@patternfly/react-core";
 
 import { _ } from "~/i18n";
 import { DeviceSelectionDialog } from "~/components/storage";
 import { deviceLabel } from '~/components/storage/utils';
 import { If, Section } from "~/components/core";
+import { Icon } from "~/components/layout";
 import { sprintf } from "sprintf-js";
 import { compact, noop } from "~/utils";
 
@@ -60,7 +62,7 @@ const TargetDeviceButton = ({ target, targetDevice, targetPVDevices, onClick = n
       }
     }
 
-    return _("No device selected yet");
+    return _("/dev/vdc");
   };
 
   return (
@@ -111,29 +113,41 @@ const InstallationDeviceField = ({
   }
 
   return (
-    <div className="split">
-      <span>{_("Installation device")}</span>
-      <TargetDeviceButton
-        target={target}
-        targetDevice={targetDevice}
-        targetPVDevices={targetPVDevices}
-        onClick={openDialog}
-      />
-      <If
-        condition={isDialogOpen}
-        then={
-          <DeviceSelectionDialog
-            isOpen
-            target={target}
-            targetDevice={targetDevice}
-            targetPVDevices={targetPVDevices}
-            devices={devices}
-            onAccept={onAccept}
-            onCancel={closeDialog}
-          />
-        }
-      />
-    </div>
+    <>
+      <div className="subheader"><span>{_("Boot device")}</span></div>
+      <div className="agama-field">
+        <Tooltip content={_("Change boot device")} aria="labelledby">
+          <button className="plain-control">
+            <Icon name="settings" />
+          </button>
+        </Tooltip>
+        <span>{_("/dev/vdc")}</span>
+      </div>
+      <div className="subheader"><span>{_("Installation Device")}</span></div>
+      <div className="split">
+        <Icon name="tune" />
+        <TargetDeviceButton
+          target={target}
+          targetDevice={targetDevice}
+          targetPVDevices={targetPVDevices}
+          onClick={openDialog}
+        />
+        <If
+          condition={isDialogOpen}
+          then={
+            <DeviceSelectionDialog
+              isOpen
+              target={target}
+              targetDevice={targetDevice}
+              targetPVDevices={targetPVDevices}
+              devices={devices}
+              onAccept={onAccept}
+              onCancel={closeDialog}
+            />
+          }
+        />
+      </div>
+    </>
   );
 };
 

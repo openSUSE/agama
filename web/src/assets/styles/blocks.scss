@@ -751,3 +751,37 @@ section [data-type="agama/reminder"] {
     }
   }
 }
+
+.pf-v5-c-switch__label {
+  font-weight: bold;
+}
+
+.subheader {
+  margin-top: var(--spacer-normal);
+  border-top: thin solid #ccc;
+
+  span {
+    margin-top: calc(1lh / 2* -1);
+    display: block;
+    background: white;
+    padding-inline-end: 5px;
+    width: max-content;
+    margin-left: 10px;
+    padding-left: 5px;
+  }
+}
+
+.agama-field {
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+
+  button {
+    width: 40px;
+    text-align: center;
+  }
+
+  span {
+    font-size: var(--fs-large);
+  }
+}

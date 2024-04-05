@@ -153,6 +153,10 @@ table td > .pf-v5-c-empty-state {
 .pf-v5-c-switch {
   // We prefer having same label color for checked and not checked switches
   --pf-v5-c-switch__input--not-checked__label--Color: var(--pf-v5-c-switch__input--checked__label--Color);
+  // --pf-v5-c-switch__input--checked__toggle--BackgroundColor: var(--color-primary-lighter);
+  --pf-v5-c-switch--ColumnGap: 1ch;
+  --pf-v5-c-switch--FontSize: var(--fs-large);
+
 }
 
 // Make the switch focus looks like the rest
