@@ -771,6 +771,12 @@ section [data-type="agama/reminder"] {
   }
 }
 
+[data-type="agama/field"] hr {
+  margin-block: var(--spacer-normal);
+  border: 0;
+  border-bottom: thin dashed var(--color-gray);
+}
+
 [data-type="agama/field"] button.pf-v5-c-menu-toggle.pf-m-plain {
   padding: 0;
 }

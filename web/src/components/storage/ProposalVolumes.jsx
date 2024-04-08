@@ -29,7 +29,7 @@ import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { sprintf } from "sprintf-js";
 
 import { _ } from "~/i18n";
-import { Em, Field, ExpandableField, If, Popup, RowActions, Tip } from '~/components/core';
+import { Em, ExpandableField, If, Popup, RowActions, Tip } from '~/components/core';
 import { Icon } from '~/components/layout';
 import { BootSelectionDialog, VolumeForm } from '~/components/storage';
 import { deviceSize, deviceLabel, hasSnapshots, isTransactionalRoot } from '~/components/storage/utils';
@@ -70,15 +70,15 @@ const BootConfigField = ({
     onChange({ configureBoot, bootDevice });
   };
 
-  const label = _("Boot partition");
+  const label = _("Change boot options");
   let value;
 
   if (!configureBoot) {
-    value = _("none (manual boot setup)");
+    value = <><Icon name="feedback" size="s" /> {_("Installation will not create boot partitions.")}</>;
   } else if (!bootDevice) {
-    value = _("at the installation device");
+    value = _("Installation might create boot partitions at the installation device.");
   } else {
-    value = sprintf(_("at %s"), deviceLabel(bootDevice));
+    value = sprintf(_("Installation might create boot partitions at %s."), deviceLabel(bootDevice));
   }
 
   if (isLoading) {
@@ -89,17 +89,8 @@ const BootConfigField = ({
     // NOTE: Using field withoud description and without icon to make the (nested)
     // option not too much prominent. We've to check other ways to do this,
     // specially in this case that could be a "Boot options" button in GeneralActions
-    <Field
-      label={label}
-      value={value}
-      // description={
-      //   _(
-      //     "To ensure the new system is able to boot, the installer may need to create or configure some \
-      //     partitions in the appropriate disk."
-      //   )
-      // }
-      onClick={openDialog}
-    >
+    <>
+      {value} <Button variant="link" isInline style={{ display: "inline-flex", alignItems: "center", gap: "0.7ch" }} onClick={openDialog}>{label}<Icon name="shadow" size="xxs" /></Button>
       <If
         condition={isDialogOpen}
         then={
@@ -114,7 +105,7 @@ const BootConfigField = ({
           />
         }
       />
-    </Field>
+    </>
   );
 };
 
@@ -541,6 +532,7 @@ export default function ProposalVolumes({
         then={
           <>
             <Advanced volumes={volumes} options={options} templates={templates} onChange={onChange} />
+            <hr />
             <BootConfigField
               configureBoot={configureBoot}
               bootDevice={bootDevice}

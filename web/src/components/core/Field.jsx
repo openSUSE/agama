@@ -54,7 +54,7 @@ const SwitchField = ({ isChecked, ...props }) => {
 };
 
 const ExpandableField = ({ isExpanded, ...props }) => {
-  const iconName = isExpanded ? "expand_all" : "collapse_all";
+  const iconName = isExpanded ? "collapse_all" : "expand_all";
   const className = isExpanded ? "expanded" : "collapsed";
 
   return <Field {...props} icon={iconName} className={className} />;

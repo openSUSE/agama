@@ -39,6 +39,7 @@ import Error from "@icons/error.svg?component";
 import ExpandAll from "@icons/expand_all.svg?component";
 import ExpandContent from "@icons/expand_content.svg?component";
 import ExpandMore from "@icons/expand_more.svg?component";
+import Feedback from "@icons/feedback.svg?component";
 import Folder from "@icons/folder.svg?component";
 import FolderOff from "@icons/folder_off.svg?component";
 import Globe from "@icons/globe.svg?component";
@@ -104,6 +105,7 @@ const icons = {
   expand_all: ExpandAll,
   expand_content: ExpandContent,
   expand_more: ExpandMore,
+  feedback: Feedback,
   folder: Folder,
   folder_off: FolderOff,
   globe: Globe,
