@@ -84,7 +84,7 @@ const ISCSILink = () => {
  * Component for rendering the options available from Storage/ProposalPage
  * @component
  */
-export default function ProposalPageMenu () {
+export default function ProposalPageMenu ({ label }) {
   const [showDasdLink, setShowDasdLink] = useState(false);
   const [showZFCPLink, setShowZFCPLink] = useState(false);
   const { storage: client } = useInstallerClient();
@@ -95,7 +95,7 @@ export default function ProposalPageMenu () {
   }, [client.dasd, client.zfcp]);
 
   return (
-    <Page.Menu>
+    <Page.Menu label={label}>
       <Page.Menu.Options>
         <If condition={showDasdLink} then={<DASDLink />} />
         <ISCSILink />

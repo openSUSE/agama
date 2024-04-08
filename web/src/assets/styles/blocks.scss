@@ -771,15 +771,53 @@ section [data-type="agama/reminder"] {
   }
 }
 
+[data-type="agama/field"] button.pf-v5-c-menu-toggle.pf-m-plain {
+  padding: 0;
+}
+
+[data-type="agama/field"] > div:first-child {
+  font-size: var(--fs-large);
+
+  button {
+    padding-inline: 0;
+  }
+
+  button:hover {
+    color: var(--color-link-hover);
+    fill: var(--color-link-hover);
+  }
+
+  button b, button:hover b {
+    text-decoration: underline;
+    text-underline-offset: var(--spacer-smaller);
+  }
+}
+
+[data-type="agama/field"].on {
+  button {
+    fill: var(--color-link-hover);
+  }
+}
+
+[data-type="agama/field"] > div:nth-child(n+2) {
+  margin-inline-start: calc(
+    var(--icon-size-s) + 1rch
+  );
+}
+
+[data-type="agama/field"] > div:nth-child(2) {
+  color: gray;
+  font-size: var(--fs-medium);
+}
+
+[data-type="agama/field"] > div:nth-child(n+3) {
+  margin-block-start: var(--spacer-small);
+}
+
 .agama-field {
   display: flex;
   align-items: center;
   gap: 1ch;
-
-  button {
-    width: 40px;
-    text-align: center;
-  }
 
   span {
     font-size: var(--fs-large);

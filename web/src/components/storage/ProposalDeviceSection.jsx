@@ -23,16 +23,13 @@
 
 import React, { useState } from "react";
 import {
-  Button,
   Skeleton,
-  Tooltip
 } from "@patternfly/react-core";
 
 import { _ } from "~/i18n";
-import { DeviceSelectionDialog } from "~/components/storage";
+import { ProposalPageMenu, DeviceSelectionDialog } from "~/components/storage";
 import { deviceLabel } from '~/components/storage/utils';
-import { If, Section } from "~/components/core";
-import { Icon } from "~/components/layout";
+import { If, SettingsField } from "~/components/core";
 import { sprintf } from "sprintf-js";
 import { compact, noop } from "~/utils";
 
@@ -40,6 +37,12 @@ import { compact, noop } from "~/utils";
  * @typedef {import ("~/client/storage").ProposalSettings} ProposalSettings
  * @typedef {import ("~/client/storage").StorageDevice} StorageDevice
  */
+
+const StorageTechSelector = () => {
+  return (
+    <ProposalPageMenu label={_("storage technologies")} />
+  );
+};
 
 /**
  * Renders a button that allows changing the target device for installation.
@@ -50,26 +53,16 @@ import { compact, noop } from "~/utils";
  * @param {StorageDevice[]} props.targetPVDevices
  * @param {import("react").MouseEventHandler<HTMLButtonElement>} [props.onClick=noop]
  */
-const TargetDeviceButton = ({ target, targetDevice, targetPVDevices, onClick = noop }) => {
-  const label = () => {
-    if (target === "disk" && targetDevice) return deviceLabel(targetDevice);
-    if (target === "newLvmVg" && targetPVDevices.length > 0) {
-      if (targetPVDevices.length > 1) return _("new LVM volume group");
+const TargetDeviceButton = ({ target, targetDevice, targetPVDevices }) => {
+  if (target === "disk" && targetDevice) return deviceLabel(targetDevice);
+  if (target === "newLvmVg" && targetPVDevices.length > 0) {
+    if (targetPVDevices.length > 1) return _("new LVM volume group");
 
-      if (targetPVDevices.length === 1) {
-        // TRANSLATORS: %s is the disk used for the LVM physical volumes (eg. "/dev/sda, 80 GiB)
-        return sprintf(_("new LVM volume group on %s"), deviceLabel(targetPVDevices[0]));
-      }
+    if (targetPVDevices.length === 1) {
+      // TRANSLATORS: %s is the disk used for the LVM physical volumes (eg. "/dev/sda, 80 GiB)
+      return sprintf(_("new LVM volume group on %s"), deviceLabel(targetPVDevices[0]));
     }
-
-    return _("/dev/vdc");
-  };
-
-  return (
-    <Button variant="link" isInline onClick={onClick}>
-      {label()}
-    </Button>
-  );
+  }
 };
 
 /**
@@ -113,41 +106,37 @@ const InstallationDeviceField = ({
   }
 
   return (
-    <>
-      <div className="subheader"><span>{_("Boot device")}</span></div>
-      <div className="agama-field">
-        <Tooltip content={_("Change boot device")} aria="labelledby">
-          <button className="plain-control">
-            <Icon name="settings" />
-          </button>
-        </Tooltip>
-        <span>{_("/dev/vdc")}</span>
-      </div>
-      <div className="subheader"><span>{_("Installation Device")}</span></div>
-      <div className="split">
-        <Icon name="tune" />
-        <TargetDeviceButton
-          target={target}
-          targetDevice={targetDevice}
-          targetPVDevices={targetPVDevices}
-          onClick={openDialog}
+    <SettingsField
+      label={_("Installation Device")}
+      value={<TargetDeviceButton target={target} targetDevice={targetDevice} targetPVDevices={targetPVDevices} />}
+      onClick={openDialog}
+      description={
+        <span
+          dangerouslySetInnerHTML={{
+            // TRANSLATORS: The storage "Device" sections's description. Do not
+            // translate 'abbr' and 'title', they are part of the HTML markup.
+            __html: _("Select the main disk or <abbr title='Logical Volume Manager'>LVM</abbr> \
+              Volume Group for installation.")
+          }}
         />
-        <If
-          condition={isDialogOpen}
-          then={
-            <DeviceSelectionDialog
-              isOpen
-              target={target}
-              targetDevice={targetDevice}
-              targetPVDevices={targetPVDevices}
-              devices={devices}
-              onAccept={onAccept}
-              onCancel={closeDialog}
-            />
-          }
-        />
-      </div>
-    </>
+      }
+    >
+      {_("Prepare more devices by configuring advanced")} <StorageTechSelector />
+      <If
+        condition={isDialogOpen}
+        then={
+          <DeviceSelectionDialog
+            isOpen
+            target={target}
+            targetDevice={targetDevice}
+            targetPVDevices={targetPVDevices}
+            devices={devices}
+            onAccept={onAccept}
+            onCancel={closeDialog}
+          />
+        }
+      />
+    </SettingsField>
   );
 };
 
@@ -181,31 +170,14 @@ export default function ProposalDeviceSection({
     });
   };
 
-  const Description = () => (
-    <span
-      dangerouslySetInnerHTML={{
-        // TRANSLATORS: The storage "Device" sections's description. Do not
-        // translate 'abbr' and 'title', they are part of the HTML markup.
-        __html: _("Select the main disk or <abbr title='Logical Volume Manager'>LVM</abbr> \
-Volume Group for installation.")
-      }}
-    />
-  );
-
   return (
-    <Section
-      // TRANSLATORS: The storage "Device" section's title.
-      title={_("Device")}
-      description={<Description />}
-    >
-      <InstallationDeviceField
-        target={target}
-        targetDevice={targetDevice}
-        targetPVDevices={targetPVDevices}
-        devices={availableDevices}
-        isLoading={isLoading && target === undefined}
-        onChange={changeTarget}
-      />
-    </Section>
+    <InstallationDeviceField
+      target={target}
+      targetDevice={targetDevice}
+      targetPVDevices={targetPVDevices}
+      devices={availableDevices}
+      isLoading={isLoading && target === undefined}
+      onChange={changeTarget}
+    />
   );
 }

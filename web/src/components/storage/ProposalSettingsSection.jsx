@@ -21,8 +21,8 @@
 
 // @ts-check
 
-import React, { useEffect, useState } from "react";
-import { Button, Checkbox, Form, Skeleton, Switch, Tooltip } from "@patternfly/react-core";
+import React, { useState } from "react";
+import { Checkbox, Form, Skeleton } from "@patternfly/react-core";
 
 import { sprintf } from "sprintf-js";
 import { _, n_ } from "~/i18n";
@@ -30,7 +30,7 @@ import { BootSelectionDialog, ProposalVolumes, SpacePolicyDialog } from "~/compo
 import { If, PasswordAndConfirmationInput, Section, Popup } from "~/components/core";
 import { Icon } from "~/components/layout";
 import { noop } from "~/utils";
-import { hasFS, deviceLabel, SPACE_POLICIES } from "~/components/storage/utils";
+import { hasFS, SPACE_POLICIES } from "~/components/storage/utils";
 
 /**
  * @typedef {import ("~/client/storage").ProposalSettings} ProposalSettings
@@ -65,9 +65,9 @@ const EncryptionSettingsForm = ({
   const tpmId = "tpm_fde";
   const luks2Id = "luks2";
 
-  useEffect(() => {
-    if (password.length === 0) onValidate(false);
-  }, [password, onValidate]);
+  // useEffect(() => {
+  //   if (password.length === 0) onValidate(false);
+  // }, [password, onValidate]);
 
   const changePassword = (_, v) => setPassword(v);
 
@@ -139,8 +139,8 @@ const SnapshotsField = ({
 
   const isChecked = rootVolume !== undefined && hasFS(rootVolume, "Btrfs") && rootVolume.snapshots;
 
-  const switchState = (_, checked) => {
-    onChange({ active: checked, settings });
+  const switchState = () => {
+    onChange({ active: !isChecked, settings });
   };
 
   if (!rootVolume.outline.snapshotsConfigurable) return;
@@ -149,17 +149,13 @@ const SnapshotsField = ({
 version of the system after configuration changes or software upgrades.");
 
   return (
-    <div>
-      <Switch
-        id="snapshots"
-        label={_("Btrfs Snapshots")}
-        isChecked={isChecked}
-        onChange={switchState}
-      />
-      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)", marginBlockStart: "var(--spacer-smaller)" }}>
-        {explanation}
-      </div>
-    </div>
+    <SwitchField
+      label={_("Btrfs Snapshots")}
+      value={isChecked ? _("enabled") : _("disabled")}
+      isChecked={isChecked}
+      onClick={switchState}
+      description={explanation}
+    />
   );
 };
 
@@ -197,7 +193,9 @@ const EncryptionField = ({
 
   const acceptForm = (newPassword, newMethod) => {
     closeForm();
-    onChange({ password: newPassword, method: newMethod });
+    setPassword(newPassword);
+    setMethod(newMethod);
+    onChange({ isChecked: newPassword.length > 0, password: newPassword, method: newMethod });
   };
 
   const cancelForm = () => {
@@ -207,42 +205,27 @@ const EncryptionField = ({
 
   const validateForm = (valid) => setIsFormValid(valid);
 
-  const changeSelected = (_, value) => {
-    setIsChecked(value);
-
-    if (value && password.length === 0) openForm();
-
-    if (!value) {
-      onChange({ password: "" });
-    }
-  };
-
-  const ChangeSettingsButton = ({ isDisabled }) => {
-    return (
-      <Button isDisabled={isDisabled || undefined} variant="link" isInline onClick={openForm}>
-        { _("Change encryption settings") }
-      </Button>
-    );
-  };
+  // const changeSelected = (_, value) => {
+  //   setIsChecked(value);
+  //
+  //   if (value && password.length === 0) openForm();
+  //
+  //   if (!value) {
+  //     setPassword("");
+  //     onChange({ isChecked: false, password: "" });
+  //   }
+  // };
 
   if (isLoading) return <Skeleton width="25%" />;
 
   return (
-    <>
-      <div>
-        <Switch
-          id="encryption"
-          label={_("Encryption")}
-          isChecked={isChecked}
-          onChange={changeSelected}
-        />
-
-        <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)", marginBlockStart: "var(--spacer-small)" }}>
-          <ChangeSettingsButton isDisabled={!isChecked} />
-        </div>
-      </div>
-
-      <Popup aria-label={_("Encryption settings")} title={_("Encryption settings")} isOpen={isFormOpen}>
+    <SettingsField
+      label={_("Encryption")}
+      description={_("Full disk encryption (FDE) allows to protect the information stored at the device, including data, programs, and system files.")}
+      value={isChecked ? _("using LUKS2") : _("none")}
+      onClick={openForm}
+    >
+      <Popup title={_("Encryption settings")} isOpen={isFormOpen}>
         <EncryptionSettingsForm
           id="encryptionSettingsForm"
           password={password}
@@ -256,91 +239,7 @@ const EncryptionField = ({
           <Popup.Cancel onClick={cancelForm} />
         </Popup.Actions>
       </Popup>
-    </>
-  );
-};
-
-/**
- * Allows to select the boot config.
- * @component
- *
- * @param {object} props
- * @param {boolean} props.configureBoot
- * @param {StorageDevice|undefined} props.bootDevice
- * @param {StorageDevice|undefined} props.defaultBootDevice
- * @param {StorageDevice[]} props.devices
- * @param {boolean} props.isLoading
- * @param {(boot: Boot) => void} props.onChange
- *
- * @typedef {object} Boot
- * @property {boolean} configureBoot
- * @property {StorageDevice} bootDevice
- */
-const BootConfigField = ({
-  configureBoot,
-  bootDevice,
-  defaultBootDevice,
-  devices,
-  isLoading,
-  onChange
-}) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const openDialog = () => setIsDialogOpen(true);
-
-  const closeDialog = () => setIsDialogOpen(false);
-
-  const onAccept = ({ configureBoot, bootDevice }) => {
-    closeDialog();
-    onChange({ configureBoot, bootDevice });
-  };
-
-  const label = _("Boot partition");
-  let value;
-
-  if (!configureBoot) {
-    value = _("none (manual boot setup)");
-  } else if (!bootDevice) {
-    value = _("at the installation device");
-  } else {
-    value = sprintf(_("at %s"), deviceLabel(bootDevice));
-  }
-
-  if (isLoading) {
-    return <Skeleton screenreaderText={_("Waiting for information about boot config")} width="25%" />;
-  }
-
-  return (
-    <div>
-      <div className="agama-field">
-        <Tooltip content={_("Change boot device")} aria="labelledby">
-          <button className="plain-control" onClick={openDialog}>
-            <Icon name="settings" />
-          </button>
-        </Tooltip>
-        <span><b>{label}</b> {value}</span>
-      </div>
-      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
-        {_(
-          "To ensure the new system is able to boot, the installer may need to create or configure some \
-          partitions in the appropriate disk."
-        )}
-      </div>
-      <If
-        condition={isDialogOpen}
-        then={
-          <BootSelectionDialog
-            isOpen
-            configureBoot={configureBoot}
-            bootDevice={bootDevice}
-            defaultBootDevice={defaultBootDevice}
-            devices={devices}
-            onAccept={onAccept}
-            onCancel={closeDialog}
-          />
-        }
-      />
-    </div>
+    </SettingsField>
   );
 };
 
@@ -377,22 +276,28 @@ const SpacePolicyField = ({
     onChange({ spacePolicy, spaceActions });
   };
 
-  const label = () => {
-    // eslint-disable-next-line agama-i18n/string-literals
-    if (policy.summaryLabels.length === 1) return _(policy.summaryLabels[0]);
-
-    // eslint-disable-next-line agama-i18n/string-literals
-    return sprintf(n_(policy.summaryLabels[0], policy.summaryLabels[1], devices.length), devices.length);
-  };
-
   if (isLoading || !policy) {
     return <Skeleton screenreaderText={_("Waiting for information about space policy")} width="25%" />;
   }
 
+  let currentValue;
+
+  // eslint-disable-next-line agama-i18n/string-literals
+  if (policy.summaryLabels.length === 1) currentValue = _(policy.summaryLabels[0]);
+
+  // eslint-disable-next-line agama-i18n/string-literals
+  currentValue = sprintf(n_(policy.summaryLabels[0], policy.summaryLabels[1], devices.length), devices.length);
+
+  const description = _("Allocating the file systems might need to find free space \
+in the installation device(s).");
+
   return (
-    <div className="split">
-      <span>{_("Find space")}</span>
-      <Button variant="link" isInline onClick={openDialog}>{label()}</Button>
+    <SettingsField
+      label={_("Find space")}
+      value={currentValue}
+      onClick={openDialog}
+      description={description}
+    >
       <If
         condition={isDialogOpen}
         then={
@@ -465,6 +370,10 @@ export default function ProposalSettingsSection({
     });
   };
 
+  const changeTargetDevice = ({ ...settings }) => {
+    onChange(settings);
+  };
+
   const lvm = settings.target === "newLvmVg" || settings.target === "reusedLvmVg";
   const encryption = settings.encryptionPassword !== undefined && settings.encryptionPassword.length > 0;
   const { volumes = [], installationDevices = [], spaceActions = [] } = settings;
@@ -483,43 +392,12 @@ export default function ProposalSettingsSection({
   return (
     <>
       <Section title="Proposal">
-        {/* <div className="subheader"> */}
-        {/*   <span>{_("Settings")}</span> */}
-        {/* </div> */}
-        {/**/}
-        <div>
-          <div className="agama-field">
-            <Tooltip content={_("Change instalaltion device")} aria="labelledby">
-              <button className="plain-control">
-                <Icon name="settings" />
-              </button>
-            </Tooltip>
-            <span><b>{_("Installation device")}</b> {_("/dev/vdc")}</span>
-          </div>
-          <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
-            <span
-              dangerouslySetInnerHTML={{
-                // TRANSLATORS: The storage "Device" sections's description. Do not
-                // translate 'abbr' and 'title', they are part of the HTML markup.
-                __html: _("Select the main disk or <abbr title='Logical Volume Manager'>LVM</abbr> \
-        Volume Group for installation.")
-              }}
-            />
-          </div>
-        </div>
-
-        <BootConfigField
-          configureBoot={settings.configureBoot}
-          bootDevice={bootDevice}
-          defaultBootDevice={defaultBootDevice}
-          devices={availableDevices}
-          isLoading={isLoading}
-          onChange={changeBoot}
-        />
-        <SnapshotsField
+        <ProposalDeviceSection
           settings={settings}
-          onChange={changeBtrfsSnapshots}
+          availableDevices={availableDevices}
+          onChange={changeTargetDevice}
         />
+
         <EncryptionField
           password={settings.encryptionPassword || ""}
           method={settings.encryptionMethod}
@@ -528,13 +406,21 @@ export default function ProposalSettingsSection({
           isLoading={settings.encryptionPassword === undefined}
           onChange={changeEncryption}
         />
-
+        <SnapshotsField
+          settings={settings}
+          onChange={changeBtrfsSnapshots}
+        />
         <ProposalVolumes
           volumes={volumes}
           templates={usefulTemplates()}
           options={{ lvm, encryption }}
           isLoading={isLoading && settings.volumes === undefined}
           onChange={changeVolumes}
+          configureBoot={settings.configureBoot}
+          bootDevice={bootDevice}
+          defaultBootDevice={defaultBootDevice}
+          devices={availableDevices}
+          onBootChange={changeBoot}
         />
 
         <SpacePolicyField

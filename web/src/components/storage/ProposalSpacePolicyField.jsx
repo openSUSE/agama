@@ -20,12 +20,11 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Button, Form, FormSelect, FormSelectOption, Skeleton, Tooltip } from "@patternfly/react-core";
+import { Form, FormSelect, FormSelectOption, Skeleton } from "@patternfly/react-core";
 
 import { _, N_, n_ } from "~/i18n";
 import { deviceSize } from '~/components/storage/utils';
-import { If, OptionsPicker, Popup, SectionSkeleton } from "~/components/core";
-import { Icon } from "~/components/layout";
+import { If, SettingsField, OptionsPicker, Popup, SectionSkeleton } from "~/components/core";
 import { noop } from "~/utils";
 import { sprintf } from "sprintf-js";
 import { Table, Thead, Tr, Th, Tbody, Td, TreeRowWrapper } from '@patternfly/react-table';
@@ -483,7 +482,7 @@ const SpacePolicyForm = ({
   );
 };
 
-const SpacePolicyButton = ({ policy, devices, onClick = noop }) => {
+const SpacePolicyButton = ({ policy, devices }) => {
   const Text = () => {
     // eslint-disable-next-line agama-i18n/string-literals
     if (policy.summaryLabels.length === 1) return _(policy.summaryLabels[0]);
@@ -492,7 +491,7 @@ const SpacePolicyButton = ({ policy, devices, onClick = noop }) => {
     return sprintf(n_(policy.summaryLabels[0], policy.summaryLabels[1], devices.length), devices.length);
   };
 
-  return <Text onClick={onClick} />;
+  return <Text />;
 };
 
 export default function ProposalSpacePolicyField({
@@ -518,25 +517,16 @@ export default function ProposalSpacePolicyField({
   }
 
   const description = _("Allocating the file systems might need to find free space \
-in the devices listed below. Choose how to do it.");
+in the installation device(s).");
 
   return (
-    <div>
-      <div className="agama-field">
-        <Tooltip content={_("Change space policy")} aria="labelledby">
-          <button className="plain-control" onClick={openForm}>
-            <Icon name="settings" />
-          </button>
-        </Tooltip>
-        <span>
-          <b>{_("Find space")}</b> <SpacePolicyButton policy={spacePolicy} devices={devices} onClick={openForm} />
-        </span>
-      </div>
-      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
-        <Button variant="link" isInline onClick={openForm}>
-          { _("Change space policy")}
-        </Button>
-      </div>
+    <SettingsField
+      icon="settings"
+      label={_("Find space")}
+      value={<SpacePolicyButton policy={spacePolicy} devices={devices} />}
+      onClick={openForm}
+      description={description}
+    >
       <Popup
         variant="large"
         description={description}
@@ -562,6 +552,6 @@ in the devices listed below. Choose how to do it.");
           <Popup.Cancel onClick={closeForm} />
         </Popup.Actions>
       </Popup>
-    </div>
+    </SettingsField>
   );
 }

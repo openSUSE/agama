@@ -35,14 +35,15 @@ import { Icon } from "~/components/layout";
  * @param {string} [props.aria-label="Show page menu"]
  * @param {function} props.onClick
  */
-const Toggler = ({ toggleRef, onClick, "aria-label": ariaLabel = _(("Show page menu")) }) => {
+const Toggler = ({ toggleRef, label, onClick, "aria-label": ariaLabel = _(("Show page menu")) }) => {
   return (
     <MenuToggle
       ref={toggleRef}
       onClick={onClick}
-      aria-label={ariaLabel}
+      aria-label={label || ariaLabel}
       variant="plain"
     >
+      { label }
       <Icon name="expand_more" />
     </MenuToggle>
   );
@@ -150,7 +151,7 @@ const Options = ({ children, ...props }) => {
  * @param {object} props
  * @param {Group|Item|Array<Group|Item>} props.children
  */
-const PageMenu = ({ togglerAriaLabel, children }) => {
+const PageMenu = ({ togglerAriaLabel, label, children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
@@ -159,7 +160,7 @@ const PageMenu = ({ togglerAriaLabel, children }) => {
   return (
     <Dropdown
       isOpen={isOpen}
-      toggle={(toggleRef) => <Toggler toggleRef={toggleRef} onClick={toggle} aria-label={togglerAriaLabel} />}
+      toggle={(toggleRef) => <Toggler label={label} toggleRef={toggleRef} onClick={toggle} aria-label={togglerAriaLabel} />}
       onSelect={close}
       onOpenChange={close}
       popperProps={{ minWidth: "150px", position: "right" }}

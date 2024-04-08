@@ -37,6 +37,7 @@ import Edit from "@icons/edit.svg?component";
 import EditSquare from "@icons/edit_square.svg?component";
 import Error from "@icons/error.svg?component";
 import ExpandAll from "@icons/expand_all.svg?component";
+import ExpandContent from "@icons/expand_content.svg?component";
 import ExpandMore from "@icons/expand_more.svg?component";
 import Folder from "@icons/folder.svg?component";
 import FolderOff from "@icons/folder_off.svg?component";
@@ -54,18 +55,23 @@ import ManageAccounts from "@icons/manage_accounts.svg?component";
 import Menu from "@icons/menu.svg?component";
 import MenuOpen from "@icons/menu_open.svg?component";
 import MoreVert from "@icons/more_vert.svg?component";
+import OpenInNew from "@icons/open_in_new.svg?component";
 import Person from "@icons/person.svg?component";
 import Problem from "@icons/problem.svg?component";
 import Refresh from "@icons/refresh.svg?component";
 import Schedule from "@icons/schedule.svg?component";
+import Settings from "@icons/settings.svg?component";
 import SettingsApplications from "@icons/settings_applications.svg?component";
 import SettingsEthernet from "@icons/settings_ethernet.svg?component";
 import SettingsFill from "@icons/settings-fill.svg?component";
+import Shadow from "@icons/shadow.svg?component";
 import SignalCellularAlt from "@icons/signal_cellular_alt.svg?component";
 import Storage from "@icons/storage.svg?component";
 import Sync from "@icons/sync.svg?component";
 import TaskAlt from "@icons/task_alt.svg?component";
 import Terminal from "@icons/terminal.svg?component";
+import ToggleOn from "@icons/toggle_on.svg?component";
+import ToggleOff from "@icons/toggle_off.svg?component";
 import Translate from "@icons/translate.svg?component";
 import Tune from "@icons/tune.svg?component";
 import Warning from "@icons/warning.svg?component";
@@ -96,6 +102,7 @@ const icons = {
   edit_square: EditSquare,
   error: Error,
   expand_all: ExpandAll,
+  expand_content: ExpandContent,
   expand_more: ExpandMore,
   folder: Folder,
   folder_off: FolderOff,
@@ -114,18 +121,23 @@ const icons = {
   menu: Menu,
   menu_open: MenuOpen,
   more_vert: MoreVert,
+  open_in_new: OpenInNew,
   person: Person,
   problem: Problem,
   refresh: Refresh,
   schedule: Schedule,
+  settings_alt: Settings,
   settings: SettingsFill,
   settings_applications: SettingsApplications,
   settings_ethernet: SettingsEthernet,
+  shadow: Shadow,
   signal_cellular_alt: SignalCellularAlt,
   storage: Storage,
   sync: Sync,
   task_alt: TaskAlt,
   terminal: Terminal,
+  toggle_on: ToggleOn,
+  toggle_off: ToggleOff,
   translate: Translate,
   tune: Tune,
   visibility: Visibility,

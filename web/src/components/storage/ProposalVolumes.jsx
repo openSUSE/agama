@@ -24,16 +24,99 @@ import {
   Button,
   List, ListItem,
   Skeleton,
-  Tooltip
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { sprintf } from "sprintf-js";
 
 import { _ } from "~/i18n";
-import { If, Popup, RowActions, Tip } from '~/components/core';
-import { VolumeForm } from '~/components/storage';
-import { deviceSize, hasSnapshots, isTransactionalRoot } from '~/components/storage/utils';
+import { Em, Field, ExpandableField, If, Popup, RowActions, Tip } from '~/components/core';
+import { Icon } from '~/components/layout';
+import { BootSelectionDialog, VolumeForm } from '~/components/storage';
+import { deviceSize, deviceLabel, hasSnapshots, isTransactionalRoot } from '~/components/storage/utils';
 import { noop } from "~/utils";
+
+/**
+ * Allows to select the boot config.
+ * @component
+ *
+ * @param {object} props
+ * @param {boolean} props.configureBoot
+ * @param {StorageDevice|undefined} props.bootDevice
+ * @param {StorageDevice|undefined} props.defaultBootDevice
+ * @param {StorageDevice[]} props.devices
+ * @param {boolean} props.isLoading
+ * @param {(boot: Boot) => void} props.onChange
+ *
+ * @typedef {object} Boot
+ * @property {boolean} configureBoot
+ * @property {StorageDevice} bootDevice
+ */
+const BootConfigField = ({
+  configureBoot,
+  bootDevice,
+  defaultBootDevice,
+  devices,
+  isLoading,
+  onChange
+}) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const openDialog = () => setIsDialogOpen(true);
+
+  const closeDialog = () => setIsDialogOpen(false);
+
+  const onAccept = ({ configureBoot, bootDevice }) => {
+    closeDialog();
+    onChange({ configureBoot, bootDevice });
+  };
+
+  const label = _("Boot partition");
+  let value;
+
+  if (!configureBoot) {
+    value = _("none (manual boot setup)");
+  } else if (!bootDevice) {
+    value = _("at the installation device");
+  } else {
+    value = sprintf(_("at %s"), deviceLabel(bootDevice));
+  }
+
+  if (isLoading) {
+    return <Skeleton screenreaderText={_("Waiting for information about boot config")} width="25%" />;
+  }
+
+  return (
+    // NOTE: Using field withoud description and without icon to make the (nested)
+    // option not too much prominent. We've to check other ways to do this,
+    // specially in this case that could be a "Boot options" button in GeneralActions
+    <Field
+      label={label}
+      value={value}
+      // description={
+      //   _(
+      //     "To ensure the new system is able to boot, the installer may need to create or configure some \
+      //     partitions in the appropriate disk."
+      //   )
+      // }
+      onClick={openDialog}
+    >
+      <If
+        condition={isDialogOpen}
+        then={
+          <BootSelectionDialog
+            isOpen
+            configureBoot={configureBoot}
+            bootDevice={bootDevice}
+            defaultBootDevice={defaultBootDevice}
+            devices={devices}
+            onAccept={onAccept}
+            onCancel={closeDialog}
+          />
+        }
+      />
+    </Field>
+  );
+};
 
 /**
  * Generates an hint describing which attributes affect the auto-calculated limits.
@@ -101,8 +184,8 @@ const GeneralActions = ({ templates, onAdd, onReset }) => {
   };
 
   return (
-    <div className="split">
-      <Button isDisabled={templates.length === 0} onClick={openForm}>
+    <div className="split" style={{ flexDirection: "row-reverse" }}>
+      <Button isDisabled={templates.length === 0} onClick={openForm} variant="secondary">
         {/* TRANSLATORS: dropdown menu label */}
         {_("Add file system")}
       </Button>
@@ -395,7 +478,7 @@ const Advanced = ({ volumes, options, templates, onChange }) => {
   };
 
   return (
-    <>
+    <div className="stack">
       <VolumesTable
         volumes={volumes}
         options={options}
@@ -405,8 +488,9 @@ const Advanced = ({ volumes, options, templates, onChange }) => {
         templates={templates}
         onAdd={addVolume}
         onReset={resetVolumes}
+
       />
-    </>
+    </div>
   );
 };
 
@@ -434,38 +518,41 @@ export default function ProposalVolumes({
   templates = [],
   options = {},
   isLoading = false,
-  onChange = noop
+  onChange = noop,
+  configureBoot,
+  bootDevice,
+  defaultBootDevice,
+  devices,
+  onBootChange = noop
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   console.log(isLoading);
 
-  const tooltipText = isExpanded ? _("See more") : _("See less");
-  const iconName = isExpanded ? "collapse_all" : "expand_all";
-
   return (
-    <div>
-      <div className="agama-field">
-        <Tooltip content={tooltipText} aria="labelledby">
-          <button className="plain-control" onClick={() => setIsExpanded(!isExpanded)}>
-            <Icon name={iconName} />
-          </button>
-        </Tooltip>
-        <span><b>{_("File systems to create")}</b></span>
-      </div>
-      <div style={{ color: "gray", marginInlineStart: "calc(40px + 1ch)" }}>
-        {_("Short explanation about File Systems, if needed")}
-      </div>
-      <div className="stack" style={{ marginBlockStart: "1ch", marginInlineStart: "calc(40px + 1ch)" }}>
-        <If
-          condition={isExpanded}
-          then={<Advanced volumes={volumes} options={options} templates={templates} onChange={onChange} /> }
-          else={<Basic volumes={volumes} options={options} /> }
-        />
-        <button className="plain-control" onClick={() => setIsExpanded(!isExpanded)}>
-          { isExpanded ? _("Switch to basic view") : _("Switch to advanced view") }
-        </button>
-      </div>
-    </div>
+    <ExpandableField
+      isExpanded={isExpanded}
+      label={_("Partitions and file systems")}
+      description={_("Structure of the new system, including any additional partiton needed for booting,")}
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <If
+        condition={isExpanded}
+        then={
+          <>
+            <Advanced volumes={volumes} options={options} templates={templates} onChange={onChange} />
+            <BootConfigField
+              configureBoot={configureBoot}
+              bootDevice={bootDevice}
+              defaultBootDevice={defaultBootDevice}
+              devices={devices}
+              onChange={onBootChange}
+            />
+          </>
+        }
+        else={<Basic volumes={volumes} options={options} /> }
+      />
+    </ExpandableField>
+
   );
 }
