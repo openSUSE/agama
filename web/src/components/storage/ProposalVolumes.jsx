@@ -66,7 +66,7 @@ const SnapshotsField = ({
 
   if (!rootVolume.outline.snapshotsConfigurable) return;
 
-  const explanation = _("Uses Btrfs for the root file systems allowing to boot to a previous \
+  const explanation = _("Allows to boot to a previous \
 version of the system after configuration changes or software upgrades.");
 
   const iconName = isChecked ? "toggle_on" : "toggle_off";
@@ -78,7 +78,7 @@ version of the system after configuration changes or software upgrades.");
         onClick={switchState}
         className={`plain-button ${className}`}
       >
-        <Icon name={iconName} size="s" /> {_("Root Snapshots:")} {isChecked ? _("enabled") : _("disabled")}
+        <Icon name={iconName} size="s" /> {_("Use Btrfs snapshots for the root file system")}
       </button>
       <div>{explanation}</div>
     </div>
