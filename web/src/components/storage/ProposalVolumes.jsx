@@ -32,8 +32,58 @@ import { _ } from "~/i18n";
 import { Em, ExpandableField, If, Popup, RowActions, Tip } from '~/components/core';
 import { Icon } from '~/components/layout';
 import { BootSelectionDialog, VolumeForm } from '~/components/storage';
-import { deviceSize, deviceLabel, hasSnapshots, isTransactionalRoot } from '~/components/storage/utils';
+import { deviceSize, deviceLabel, hasFS, hasSnapshots, isTransactionalRoot } from '~/components/storage/utils';
 import { noop } from "~/utils";
+
+/**
+ * Allows to define snapshots enablement
+ * @component
+ *
+ * @param {object} props
+ * @param {ProposalVolumes} props.volumes - Volumes
+ * @param {(config: SnapshotsConfig) => void} [props.onChange=noop] - On change callback
+ *
+ * @typedef {object} SnapshotsConfig
+ * @property {boolean} active
+ * @property {ProposalSettings} settings
+ */
+const SnapshotsField = ({
+  volumes,
+  onChange = noop
+}) => {
+  const rootVolume = (volumes || []).find((i) => i.mountPath === "/");
+
+  // no root volume is probably some error or still loading
+  if (rootVolume === undefined) {
+    return <Skeleton width="25%" />;
+  }
+
+  const isChecked = rootVolume !== undefined && hasFS(rootVolume, "Btrfs") && rootVolume.snapshots;
+
+  const switchState = () => {
+    onChange({ active: !isChecked });
+  };
+
+  if (!rootVolume.outline.snapshotsConfigurable) return;
+
+  const explanation = _("Uses Btrfs for the root file systems allowing to boot to a previous \
+version of the system after configuration changes or software upgrades.");
+
+  const iconName = isChecked ? "toggle_on" : "toggle_off";
+  const className = isChecked ? "on" : "off";
+
+  return (
+    <div data-type="agama/field">
+      <button
+        onClick={switchState}
+        className={`plain-button ${className}`}
+      >
+        <Icon name={iconName} size="s" /> {_("Root Snapshots:")} {isChecked ? _("enabled") : _("disabled")}
+      </button>
+      <div>{explanation}</div>
+    </div>
+  );
+};
 
 /**
  * Allows to select the boot config.
@@ -514,7 +564,8 @@ export default function ProposalVolumes({
   bootDevice,
   defaultBootDevice,
   devices,
-  onBootChange = noop
+  onBootChange = noop,
+  changeBtrfsSnapshots = noop
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -531,6 +582,8 @@ export default function ProposalVolumes({
         condition={isExpanded}
         then={
           <>
+            <SnapshotsField volumes={volumes} onChange={changeBtrfsSnapshots} />
+            <hr />
             <Advanced volumes={volumes} options={options} templates={templates} onChange={onChange} />
             <hr />
             <BootConfigField

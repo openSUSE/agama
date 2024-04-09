@@ -807,7 +807,7 @@ section [data-type="agama/reminder"] {
 
 [data-type="agama/field"] > div:nth-child(n+2) {
   margin-inline-start: calc(
-    var(--icon-size-s) + 1rch
+    var(--icon-size-s) + 1ch
   );
 }
 
@@ -818,6 +818,21 @@ section [data-type="agama/reminder"] {
 
 [data-type="agama/field"] > div:nth-child(n+3) {
   margin-block-start: var(--spacer-small);
+}
+
+.field-explanation {
+  color: gray;
+  font-size: var(--fs-medium);
+}
+
+button.on {
+  fill: var(--color-primary-lighter);
+}
+
+button.text-decoration-none,
+button.text-decoration-none:hover,
+button.text-decoration-none:focus {
+  text-decoration: none;
 }
 
 .agama-field {

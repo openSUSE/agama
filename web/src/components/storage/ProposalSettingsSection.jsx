@@ -27,9 +27,9 @@ import { Checkbox, Form, Skeleton } from "@patternfly/react-core";
 import { sprintf } from "sprintf-js";
 import { _, n_ } from "~/i18n";
 import { ProposalDeviceSection, ProposalVolumes, SpacePolicyDialog } from "~/components/storage";
-import { If, SwitchField, SettingsField, PasswordAndConfirmationInput, Section, Popup } from "~/components/core";
+import { If, SettingsField, PasswordAndConfirmationInput, Section, Popup } from "~/components/core";
 import { noop } from "~/utils";
-import { hasFS, SPACE_POLICIES } from "~/components/storage/utils";
+import { SPACE_POLICIES } from "~/components/storage/utils";
 
 /**
  * @typedef {import ("~/client/storage").ProposalSettings} ProposalSettings
@@ -110,51 +110,6 @@ const EncryptionSettingsForm = ({
         }
       />
     </Form>
-  );
-};
-
-/**
- * Allows to define snapshots enablement
- * @component
- *
- * @param {object} props
- * @param {ProposalSettings} props.settings - Settings used for calculating a proposal.
- * @param {(config: SnapshotsConfig) => void} [props.onChange=noop] - On change callback
- *
- * @typedef {object} SnapshotsConfig
- * @property {boolean} active
- * @property {ProposalSettings} settings
- */
-const SnapshotsField = ({
-  settings,
-  onChange = noop
-}) => {
-  const rootVolume = (settings.volumes || []).find((i) => i.mountPath === "/");
-
-  // no root volume is probably some error or still loading
-  if (rootVolume === undefined) {
-    return <Skeleton width="25%" />;
-  }
-
-  const isChecked = rootVolume !== undefined && hasFS(rootVolume, "Btrfs") && rootVolume.snapshots;
-
-  const switchState = () => {
-    onChange({ active: !isChecked, settings });
-  };
-
-  if (!rootVolume.outline.snapshotsConfigurable) return;
-
-  const explanation = _("Uses Btrfs for the root file system allowing to boot to a previous \
-version of the system after configuration changes or software upgrades.");
-
-  return (
-    <SwitchField
-      label={_("Btrfs Snapshots")}
-      value={isChecked ? _("enabled") : _("disabled")}
-      isChecked={isChecked}
-      onClick={switchState}
-      description={explanation}
-    />
   );
 };
 
@@ -336,7 +291,7 @@ export default function ProposalSettingsSection({
     onChange({ encryptionPassword: password, encryptionMethod: method });
   };
 
-  const changeBtrfsSnapshots = ({ active, settings }) => {
+  const changeBtrfsSnapshots = ({ active }) => {
     const rootVolume = settings.volumes.find((i) => i.mountPath === "/");
 
     if (active) {
@@ -403,10 +358,6 @@ export default function ProposalSettingsSection({
           isLoading={settings.encryptionPassword === undefined}
           onChange={changeEncryption}
         />
-        <SnapshotsField
-          settings={settings}
-          onChange={changeBtrfsSnapshots}
-        />
         <ProposalVolumes
           volumes={volumes}
           templates={usefulTemplates()}
@@ -418,6 +369,7 @@ export default function ProposalSettingsSection({
           defaultBootDevice={defaultBootDevice}
           devices={availableDevices}
           onBootChange={changeBoot}
+          changeBtrfsSnapshots={changeBtrfsSnapshots}
         />
 
         <SpacePolicyField
