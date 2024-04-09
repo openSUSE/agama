@@ -26,9 +26,8 @@ import { Checkbox, Form, Skeleton } from "@patternfly/react-core";
 
 import { sprintf } from "sprintf-js";
 import { _, n_ } from "~/i18n";
-import { BootSelectionDialog, ProposalVolumes, SpacePolicyDialog } from "~/components/storage";
-import { If, PasswordAndConfirmationInput, Section, Popup } from "~/components/core";
-import { Icon } from "~/components/layout";
+import { ProposalDeviceSection, ProposalVolumes, SpacePolicyDialog } from "~/components/storage";
+import { If, SwitchField, SettingsField, PasswordAndConfirmationInput, Section, Popup } from "~/components/core";
 import { noop } from "~/utils";
 import { hasFS, SPACE_POLICIES } from "~/components/storage/utils";
 
@@ -193,8 +192,6 @@ const EncryptionField = ({
 
   const acceptForm = (newPassword, newMethod) => {
     closeForm();
-    setPassword(newPassword);
-    setMethod(newMethod);
     onChange({ isChecked: newPassword.length > 0, password: newPassword, method: newMethod });
   };
 
@@ -311,7 +308,7 @@ in the installation device(s).");
           />
         }
       />
-    </div>
+    </SettingsField>
   );
 };
 
