@@ -22,7 +22,12 @@
 // @ts-check
 
 import React, { useState } from "react";
-import { Radio, Form } from "@patternfly/react-core";
+import {
+  Form,
+  MenuToggle,
+  Select, SelectOption, SelectList
+} from '@patternfly/react-core';
+
 import { sprintf } from "sprintf-js";
 
 import { _ } from "~/i18n";
@@ -68,6 +73,63 @@ const availableTargets = (volume, device) => {
 const sanitizeTarget = (volume, device) => {
   const targets = availableTargets(volume, device);
   return targets.includes(volume.target) ? volume.target : defaultTarget(device);
+};
+
+const SelectTarget = ({ volume, onSelect, selectedId }) => {
+  const TARGETS = [
+    {
+      id: "NEW_PARTITION",
+      label: _("Create a new partition"),
+      description: _("The file system will be allocated as a new partition at the selected disk.")
+    },
+    {
+      id: "DEVICE",
+      // TRANSLATORS: %s is replaced by a file system type (e.g., Ext4).
+      description: sprintf(_("The selected device will be formatted as %s file system."), volume.fsType),
+      label: _("Format the device")
+    },
+    {
+      id: "NEW_VG",
+      description: _("A new volume group will be allocated in the selected disk and the file system will be created as a logical volume."),
+      label: _("Create a dedicated LVM volume group")
+    },
+    {
+      id: "FILESYSTEM",
+      description: _("The current file system on the selected device will be mounted without formatting the device."),
+      label: _("Mount the file system")
+    }
+  ];
+
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = TARGETS.find(t => t.id === selectedId);
+  const onToggleClick = () => setIsOpen(!isOpen);
+
+  const toggle = toggleRef => (
+    <MenuToggle ref={toggleRef} onClick={onToggleClick} isExpanded={isOpen}>
+      {selected.label}
+    </MenuToggle>
+  );
+
+  const whenSelect = (_, value) => {
+    onSelect(value);
+    setIsOpen(false);
+  };
+
+  return (
+    <Select
+      id="target"
+      isOpen={isOpen}
+      selected={selected}
+      onSelect={whenSelect}
+      onOpenChange={isOpen => setIsOpen(isOpen)}
+      toggle={toggle}
+      shouldFocusToggleOnSelect
+    >
+      <SelectList>
+        { TARGETS.map(t => <SelectOption key={t.id} value={t.id} description={t.description}>{t.label}</SelectOption>) }
+      </SelectList>
+    </Select>
+  );
 };
 
 /**
@@ -148,47 +210,7 @@ export default function VolumeLocationDialog({
         <ol className="stack">
           <li>
             <div>{_("Select how the file system will be allocated")}</div>
-            <div className="two-columns">
-              <Radio
-                id="new_partition"
-                name="target"
-                label={_("Create a new partition")}
-                description={_("The file system will be allocated as a new partition at the selected \
-    disk.")}
-                isChecked={target === "NEW_PARTITION"}
-                onChange={() => setTarget("NEW_PARTITION")}
-              />
-              <Radio
-                id="format"
-                name="target"
-                label={_("Format the device")}
-                description={
-                  // TRANSLATORS: %s is replaced by a file system type (e.g., Ext4).
-                  sprintf(_("The selected device will be formatted as %s file system."),
-                          volume.fsType)
-                }
-                isChecked={target === "DEVICE"}
-                onChange={() => setTarget("DEVICE")}
-              />
-              <Radio
-                id="dedicated_lvm"
-                name="target"
-                label={_("Create a dedicated LVM volume group")}
-                description={_("A new volume group will be allocated in the selected disk and the \
-    file system will be created as a logical volume.")}
-                isChecked={target === "NEW_VG"}
-                onChange={() => setTarget("NEW_VG")}
-              />
-              <Radio
-                id="mount"
-                name="target"
-                label={_("Mount the file system")}
-                description={_("The current file system on the selected device will be mounted \
-    without formatting the device.")}
-                isChecked={target === "FILESYSTEM"}
-                onChange={() => setTarget("FILESYSTEM")}
-              />
-            </div>
+            <SelectTarget volume={volume} selectedId={target} onSelect={setTarget} />
           </li>
           <li>
             <div>
