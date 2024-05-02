@@ -53,8 +53,34 @@
 }
 
 .location-layout table tbody tr:not(:first-child) {
+  td:nth-child(2) {
+    inline-size: 30px;
+  }
+
   td:nth-child(3) {
     padding-inline-start: 5ch;
+  }
+}
+
+#volume-location-form {
+  ol {
+    padding-inline: var(--spacer-medium);
+  }
+
+  ol ::marker,
+  li > div:first-child {
+    font-size: var(--fs-h3);
+    font-weight: bold;
+  }
+
+  li:first-child > div:first-child {
+    margin-block-end: var(--spacer-small);
+  }
+
+  div.two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacer-small);
   }
 }
 

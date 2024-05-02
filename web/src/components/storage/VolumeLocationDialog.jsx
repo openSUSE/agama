@@ -22,12 +22,12 @@
 // @ts-check
 
 import React, { useState } from "react";
-import { Radio, Form, FormGroup } from "@patternfly/react-core";
+import { Radio, Form } from "@patternfly/react-core";
 import { sprintf } from "sprintf-js";
 
 import { _ } from "~/i18n";
 import { deviceChildren, volumeLabel } from "~/components/storage/utils";
-import { FormReadOnlyField, Popup } from "~/components/core";
+import { If, Popup, Reminder } from "~/components/core";
 import VolumeLocationSelectorTable from "~/components/storage/VolumeLocationSelectorTable";
 
 /**
@@ -122,10 +122,13 @@ export default function VolumeLocationDialog({
 
   /** @type {(device: StorageDevice) => boolean} */
   const isDeviceSelectable = (device) => {
-    return device.isDrive || ["md", "partition", "lvmLv"].includes(device.type);
+    return availableTargets(volume, device).includes(target);
+    // return device.isDrive || ["md", "partition", "lvmLv"].includes(device.type);
   };
 
-  const targets = availableTargets(volume, targetDevice);
+  const selectableDevices = volumeDevices.filter(d => isDeviceSelectable(d));
+
+  // const targets = availableTargets(volume, targetDevice);
 
   if (!targetDevice) return null;
 
@@ -142,69 +145,77 @@ export default function VolumeLocationDialog({
       {...props}
     >
       <Form id="volume-location-form" onSubmit={onSubmit}>
-        { /** FIXME: Rename FormReadOnlyField */}
-        <FormReadOnlyField label={_("Select in which device to allocate the file system")} />
-        <div className="scrollbox">
-          <VolumeLocationSelectorTable
-            aria-label={_("Select a location")}
-            devices={volumeDevices}
-            selectedDevices={[targetDevice]}
-            targetDevices={targetDevices}
-            volumes={volumes}
-            itemChildren={deviceChildren}
-            itemSelectable={isDeviceSelectable}
-            onSelectionChange={changeTargetDevice}
-            initialExpandedKeys={volumeDevices.map(d => d.sid)}
-            variant="compact"
-          />
-        </div>
-        <FormGroup label={_("Select how to allocate the file system")}>
-          <div className="stack">
-            <Radio
-              id="new_partition"
-              name="target"
-              label={_("Create a new partition")}
-              description={_("The file system will be allocated as a new partition at the selected \
-  disk.")}
-              isChecked={target === "NEW_PARTITION"}
-              isDisabled={!targets.includes("NEW_PARTITION")}
-              onChange={() => setTarget("NEW_PARTITION")}
-            />
-            <Radio
-              id="dedicated_lvm"
-              name="target"
-              label={_("Create a dedicated LVM volume group")}
-              description={_("A new volume group will be allocated in the selected disk and the \
-  file system will be created as a logical volume.")}
-              isChecked={target === "NEW_VG"}
-              isDisabled={!targets.includes("NEW_VG")}
-              onChange={() => setTarget("NEW_VG")}
-            />
-            <Radio
-              id="format"
-              name="target"
-              label={_("Format the device")}
-              description={
-                // TRANSLATORS: %s is replaced by a file system type (e.g., Ext4).
-                sprintf(_("The selected device will be formatted as %s file system."),
-                        volume.fsType)
-              }
-              isChecked={target === "DEVICE"}
-              isDisabled={!targets.includes("DEVICE")}
-              onChange={() => setTarget("DEVICE")}
-            />
-            <Radio
-              id="mount"
-              name="target"
-              label={_("Mount the file system")}
-              description={_("The current file system on the selected device will be mounted \
-  without formatting the device.")}
-              isChecked={target === "FILESYSTEM"}
-              isDisabled={!targets.includes("FILESYSTEM")}
-              onChange={() => setTarget("FILESYSTEM")}
-            />
-          </div>
-        </FormGroup>
+        <ol className="stack">
+          <li>
+            <div>{_("Select how the file system will be allocated")}</div>
+            <div className="two-columns">
+              <Radio
+                id="new_partition"
+                name="target"
+                label={_("Create a new partition")}
+                description={_("The file system will be allocated as a new partition at the selected \
+    disk.")}
+                isChecked={target === "NEW_PARTITION"}
+                onChange={() => setTarget("NEW_PARTITION")}
+              />
+              <Radio
+                id="format"
+                name="target"
+                label={_("Format the device")}
+                description={
+                  // TRANSLATORS: %s is replaced by a file system type (e.g., Ext4).
+                  sprintf(_("The selected device will be formatted as %s file system."),
+                          volume.fsType)
+                }
+                isChecked={target === "DEVICE"}
+                onChange={() => setTarget("DEVICE")}
+              />
+              <Radio
+                id="dedicated_lvm"
+                name="target"
+                label={_("Create a dedicated LVM volume group")}
+                description={_("A new volume group will be allocated in the selected disk and the \
+    file system will be created as a logical volume.")}
+                isChecked={target === "NEW_VG"}
+                onChange={() => setTarget("NEW_VG")}
+              />
+              <Radio
+                id="mount"
+                name="target"
+                label={_("Mount the file system")}
+                description={_("The current file system on the selected device will be mounted \
+    without formatting the device.")}
+                isChecked={target === "FILESYSTEM"}
+                onChange={() => setTarget("FILESYSTEM")}
+              />
+            </div>
+          </li>
+          <li>
+            <div>
+              <div>{_("Choose a device among available")}</div>
+              <If
+                condition={selectableDevices.length > 0}
+                then={
+                  <VolumeLocationSelectorTable
+                    aria-label={_("Select a location")}
+                    devices={volumeDevices}
+                    selectedDevices={[targetDevice]}
+                    targetDevices={targetDevices}
+                    volumes={volumes}
+                    itemChildren={deviceChildren}
+                    itemSelectable={isDeviceSelectable}
+                    onSelectionChange={changeTargetDevice}
+                    initialExpandedKeys={volumeDevices.map(d => d.sid)}
+                    variant="compact"
+                  />
+                }
+                else={
+                  <Reminder role="alert" icon="warning" variant="FIXME" title={_("There are no devices for ACTION VOLUME")} />
+                }
+              />
+            </div>
+          </li>
+        </ol>
       </Form>
       <Popup.Actions>
         <Popup.Confirm form="volume-location-form" type="submit" />

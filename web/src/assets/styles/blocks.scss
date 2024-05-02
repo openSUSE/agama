@@ -663,6 +663,18 @@ section [data-type="agama/reminder"] {
   }
 }
 
+[data-type="agama/reminder"][data-variant="FIXME"] {
+  --accent-color: var(--color-primary);
+  padding-block: 0;
+  margin-inline: 0;
+  margin-block: 1rem;
+  border-inline-start-width: 0;
+
+  h4 {
+    font-size: var(--fs-large);
+  }
+}
+
 [role="dialog"] {
   section:not([class^="pf-c"]) {
     > svg:first-child {
