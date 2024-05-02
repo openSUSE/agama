@@ -32,8 +32,10 @@ import { sprintf } from "sprintf-js";
 
 import { _ } from "~/i18n";
 import { deviceChildren, volumeLabel } from "~/components/storage/utils";
-import { If, Popup, Reminder } from "~/components/core";
-import VolumeLocationSelectorTable from "~/components/storage/VolumeLocationSelectorTable";
+import { Popup } from "~/components/core";
+import {
+  DeviceName, DeviceDetails, DeviceSize, toStorageDevice
+} from "~/components/storage/device-utils";
 
 /**
  * @typedef {"auto"|"device"|"reuse"} LocationOption
@@ -73,6 +75,102 @@ const availableTargets = (volume, device) => {
 const sanitizeTarget = (volume, device) => {
   const targets = availableTargets(volume, device);
   return targets.includes(volume.target) ? volume.target : defaultTarget(device);
+};
+
+/**
+ * Returns what (volumes, installation device) is using a device.
+ * @function
+ *
+ * @param {PartitionSlot|StorageDevice} item
+ * @param {StorageDevice[]} targetDevices
+ * @param {Volume[]} volumes
+ * @returns {string[]}
+ */
+const deviceUsers = (item, targetDevices, volumes) => {
+  const device = toStorageDevice(item);
+  if (!device) return [];
+
+  const isTargetDevice = !!targetDevices.find(d => d.name === device.name);
+  const volumeUsers = volumes.filter(v => v.targetDevice?.name === device.name);
+
+  const users = [];
+  if (isTargetDevice) users.push(_("Installation device"));
+
+  return users.concat(volumeUsers.map(v => v.mountPath));
+};
+
+/**
+ * @component
+ *
+ * @param {object} props
+ * @param {string[]} props.users
+ */
+const DeviceUsage = ({ users }) => {
+  if (users.length === 0) return;
+
+  return (
+    <div className="wrapped split">
+      {_("Used by")} {users.map((user, index) => <b key={index}>{user}</b>)}
+    </div>
+  );
+};
+
+const SelectDevice = ({ devices, selectedDevice, selectableDevices, targetDevices, volumes, onSelect }) => {
+  console.log("selectableDevices", selectableDevices);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const onToggleClick = () => setIsOpen(!isOpen);
+  const toggle = toggleRef => (
+    <MenuToggle ref={toggleRef} onClick={onToggleClick} isExpanded={isOpen}>
+      <DeviceName item={selectedDevice} />
+    </MenuToggle>
+  );
+  const whenSelect = (_, value) => {
+    onSelect(value);
+    setIsOpen(false);
+  };
+
+  const OptionValue = ({ device }) => (
+    <div className="split">
+      <DeviceName item={device} />
+      <DeviceDetails item={device} />
+      <DeviceSize item={device} />
+    </div>
+  );
+
+  const renderOption = (device) => {
+    const children = deviceChildren(device);
+    const validChildren = Array.isArray(children) && children.length > 0;
+
+    return (
+      <>
+        <SelectOption
+          key={device.sid}
+          value={device}
+          description={<DeviceUsage users={deviceUsers(device, targetDevices, volumes)} />}
+        >
+          <OptionValue device={device} />
+        </SelectOption>
+        {validChildren && children.map(d => renderOption(d))}
+      </>
+    );
+  };
+
+  return (
+    <Select
+      id="device"
+      isOpen={isOpen}
+      selected={selectedDevice}
+      onSelect={whenSelect}
+      onOpenChange={isOpen => setIsOpen(isOpen)}
+      toggle={toggle}
+      shouldFocusToggleOnSelect
+    >
+      <SelectList>
+        {devices.map(d => renderOption(d))}
+      </SelectList>
+    </Select>
+  );
 };
 
 const SelectTarget = ({ volume, onSelect, selectedId }) => {
@@ -126,7 +224,7 @@ const SelectTarget = ({ volume, onSelect, selectedId }) => {
       shouldFocusToggleOnSelect
     >
       <SelectList>
-        { TARGETS.map(t => <SelectOption key={t.id} value={t.id} description={t.description}>{t.label}</SelectOption>) }
+        {TARGETS.map(t => <SelectOption key={t.id} value={t.id} description={t.description}>{t.label}</SelectOption>)}
       </SelectList>
     </Select>
   );
@@ -165,13 +263,11 @@ export default function VolumeLocationDialog({
   const [target, setTarget] = useState(initialTarget);
   const [targetDevice, setTargetDevice] = useState(initialDevice);
 
-  /** @type {(devices: StorageDevice[]) => void} */
-  const changeTargetDevice = (devices) => {
-    const newTargetDevice = devices[0];
-
-    if (newTargetDevice.name !== targetDevice.name) {
-      setTarget(defaultTarget(newTargetDevice));
-      setTargetDevice(newTargetDevice);
+  /** @type {(devices: StorageDevice) => void} */
+  const changeTargetDevice = (device) => {
+    if (device.name !== targetDevice.name) {
+      setTarget(defaultTarget(device));
+      setTargetDevice(device);
     }
   };
 
@@ -215,25 +311,13 @@ export default function VolumeLocationDialog({
           <li>
             <div>
               <div>{_("Choose a device among available")}</div>
-              <If
-                condition={selectableDevices.length > 0}
-                then={
-                  <VolumeLocationSelectorTable
-                    aria-label={_("Select a location")}
-                    devices={volumeDevices}
-                    selectedDevices={[targetDevice]}
-                    targetDevices={targetDevices}
-                    volumes={volumes}
-                    itemChildren={deviceChildren}
-                    itemSelectable={isDeviceSelectable}
-                    onSelectionChange={changeTargetDevice}
-                    initialExpandedKeys={volumeDevices.map(d => d.sid)}
-                    variant="compact"
-                  />
-                }
-                else={
-                  <Reminder role="alert" icon="warning" variant="FIXME" title={_("There are no devices for ACTION VOLUME")} />
-                }
+              <SelectDevice
+                devices={volumeDevices}
+                selectedDevice={targetDevice}
+                selectableDevices={selectableDevices}
+                targetDevices={targetDevices}
+                volumes={volumes}
+                onSelect={changeTargetDevice}
               />
             </div>
           </li>
