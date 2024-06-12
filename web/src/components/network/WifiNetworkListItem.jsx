@@ -95,7 +95,7 @@ function WifiNetworkListItem({ network, isSelected, isActive, onSelect, onCancel
             {networkState(network.device?.state)}
           </Text>
           {network.settings &&
-            <WifiNetworkMenu settings={network.settings} device={network.device} onConnect={onSelect} />}
+            <WifiNetworkMenu settings={network.settings} />}
         </Split>
       </Flex>
       {isSelected && (!network.settings || network.error) &&

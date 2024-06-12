@@ -31,7 +31,7 @@ const KebabToggle = ({ toggleRef, onClick }) => (
   </MenuToggle>
 );
 
-export default function WifiNetworkMenu({ settings, position = "right", device, onConnect }) {
+export default function WifiNetworkMenu({ settings, position = "right" }) {
   const client = useInstallerClient();
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);
@@ -45,27 +45,6 @@ export default function WifiNetworkMenu({ settings, position = "right", device, 
       position={position}
     >
       <DropdownList>
-        {!device &&
-          <DropdownItem
-            key="connect"
-            onClick={async () => {
-              await client.network.connectTo(settings);
-              onConnect();
-            }}
-            icon={<Icon name="delete" size="s" />}
-          >
-            {/* TRANSLATORS: menu label, connect to the selected WiFi network */}
-            {_("Connect")}
-          </DropdownItem>}
-        {device &&
-          <DropdownItem
-            key="discconnect"
-            onClick={async () => await client.network.disconnect(settings)}
-            icon={<Icon name="delete" size="s" />}
-          >
-            {/* TRANSLATORS: menu label, disconnect from the selected WiFi network */}
-            {_("Disconnect")}
-          </DropdownItem>}
         <DropdownItem
           isDanger
           key="forget-network"

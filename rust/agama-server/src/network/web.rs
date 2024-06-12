@@ -315,12 +315,6 @@ async fn connect(
         .await
         .map_err(|_| NetworkError::CannotApplyConfig)?;
 
-    state
-        .network
-        .apply()
-        .await
-        .map_err(|_| NetworkError::CannotApplyConfig)?;
-
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -344,12 +338,6 @@ async fn disconnect(
     state
         .network
         .update_connection(conn)
-        .await
-        .map_err(|_| NetworkError::CannotApplyConfig)?;
-
-    state
-        .network
-        .apply()
         .await
         .map_err(|_| NetworkError::CannotApplyConfig)?;
 
