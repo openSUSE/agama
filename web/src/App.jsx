@@ -20,6 +20,7 @@
  */
 
 import React from "react";
+import { useAtom } from "jotai";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Loading } from "./components/layout";
 import { Questions } from "~/components/questions";
@@ -29,6 +30,7 @@ import { useInstallerClientStatus } from "~/context/installer";
 import { useProduct } from "./context/product";
 import { CONFIG, INSTALL, STARTUP } from "~/client/phase";
 import { BUSY } from "~/client/status";
+import { configSubscription } from "./components/l10n/atoms";
 
 /**
  * Main application component.
@@ -42,6 +44,8 @@ function App() {
   const { connected, error, phase, status } = useInstallerClientStatus();
   const { selectedProduct, products } = useProduct();
   const { language } = useInstallerL10n();
+
+  useAtom(configSubscription);
 
   const Content = () => {
     if (error) return <ServerError />;

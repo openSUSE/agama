@@ -31,21 +31,26 @@ import { useL10n } from "~/context/l10n";
 import { useInstallerClient } from "~/context/installer";
 import { ListSearch, Page } from "~/components/core";
 import textStyles from '@patternfly/react-styles/css/utilities/Text/text';
+import { useAtom } from "jotai";
+import { locales as localesAtom, selectedLocales as selectedLocalesAtom } from "./atoms";
 
 // TODO: Add documentation and typechecking
 // TODO: Evaluate if worth it extracting the selector
 export default function LocaleSelection() {
   const { l10n } = useInstallerClient();
-  const { locales, selectedLocales } = useL10n();
+  const [locales] = useAtom(localesAtom);
+  const [selectedLocales] = useAtom(selectedLocalesAtom);
+  const { localesLegacy, selectedLocalesLegacy } = useL10n();
   const [selected, setSelected] = useState(selectedLocales[0]);
   const [filteredLocales, setFilteredLocales] = useState(locales);
   const navigate = useNavigate();
 
   const searchHelp = _("Filter by language, territory or locale code");
+  console.log("rendering selector");
 
-  useEffect(() => {
-    setFilteredLocales(locales);
-  }, [locales, setFilteredLocales]);
+  // useEffect(() => {
+  //   setFilteredLocales(locales);
+  // }, [locales, setFilteredLocales]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -74,7 +79,7 @@ export default function LocaleSelection() {
           </Flex>
         }
         value={JSON.stringify(locale)}
-        checked={locale === selected}
+        checked={locale.id === selected}
       />
     );
   });
