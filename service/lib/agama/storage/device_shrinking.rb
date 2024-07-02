@@ -46,7 +46,12 @@ module Agama
       def unsupported_reasons
         return nil if supported?
 
-        [content_reason, shrinking_reason, resize_reason].compact
+        [
+          content_reason_text,
+          min_size_reason_text,
+          shrinking_reasons_text,
+          resize_reasons_text
+        ].flatten.compact
       end
 
     private
@@ -91,31 +96,49 @@ module Agama
       end
 
       def has_shrinking_reasons?
-        device.resize_info.reasons.any? { |r| SHRINKING_REASONS.include?(r) }
+        shrinking_reasons.any?
       end
 
       def has_resize_reasons?
-        device.resize_info.reasons.any? { |r| RESIZE_REASONS.include?(r) }
+        resize_reasons.any?
       end
 
-      def content_reason
-        return nil if has_content?
+      def shrinking_reasons
+        device.resize_info.reasons.select { |r| SHRINKING_REASONS.include?(r) }
+      end
+
+      def resize_reasons
+        device.resize_info.reasons.select { |r| RESIZE_REASONS.include?(r) }
+      end
+
+      def content_reason_text
+        return nil if has_content? || has_reasons?
 
         _("Neither a file system nor a storage system was detected on the device. In case the " \
           "device does contain a file system or a storage system that is not supported, resizing " \
           "will most likely cause data loss.")
       end
 
-      def shrinking_reason
-        return nil if has_min_size? && !has_shrinking_reasons?
+      def min_size_reason_text
+        return nil if has_min_size? || has_reasons?
 
-        _("The device does not allow shrinking")
+        _("Shrinking is not supported by this device")
       end
 
-      def resize_reason
+      def shrinking_reasons_text
+        return nil unless has_shrinking_reasons?
+
+        shrinking_reasons.map { |r| reason_text(r) }
+      end
+
+      def resize_reasons_text
         return nil unless has_resize_reasons?
 
-        _("The device does not allow resizing")
+        resize_reasons.map { |r| reason_text(r) }
+      end
+
+      def reason_text(reason)
+        device.resize_info.reason_text(reason)
       end
     end
   end
