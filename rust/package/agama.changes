@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 02 13:15:33 UTC 2024 - Jorik Cronenberg <jorik.cronenberg@suse.com>
+
+- Add dns search domains and ignore-auto-dns to network model
+  (gh#openSUSE/agama#1330).
+
+-------------------------------------------------------------------
 Fri Jun 28 06:56:02 UTC 2024 - Martin Vidner <mvidner@suse.com>
 
 - Use gzip (.gz) instead of bzip2 (.bz2) to compress logs
