@@ -91,19 +91,26 @@ module Agama
           busy_while { backend.probe }
         end
 
-        # Calculates a proposal (guided or AutoYaST) from a given storage config.
+        # Calculates a proposal from a given storage config.
         #
         # @raise If config is not valid.
         #
-        # @param serialized_config [String] Serialized storage config. It can be storage or legacy
-        #   AutoYaST settings: { "storage": ... } vs { "legacyAutoyastStorage": ... }.
+        # @param serialized_config [String] Serialized storage config. It can be storage settings
+        #   or legacy AutoYaST settings:
+        #   { "storage": ... }
+        #   { "legacyAutoyastStorage": ... }
         def apply_storage_config(serialized_config)
           config_json = JSON.parse(serialized_config, symbolize_names: true)
 
-          if (settings_json = config_json.dig(:storage, :guided))
-            calculate_guided_proposal(settings_json)
-          elsif (settings_json = config_json[:legacyAutoyastStorage])
-            calculate_autoyast_proposal(settings_json)
+          # @todo Validate JSON schema.
+
+          storage_json = config_json[:storage]
+          autoyast_json = config_json[:legacyAutoyastStorage]
+
+          if storage_json
+            calculate_proposal(storage_json)
+          elsif autoyast_json
+            calculate_autoyast_proposal(autoyast_json)
           else
             raise "Invalid config: #{serialized_config}"
           end
@@ -225,25 +232,6 @@ module Agama
           AUTOYAST = "autoyast"
         end
 
-        # Calculates a guided proposal.
-        # @deprecated
-        #
-        # @param dbus_settings [Hash]
-        # @return [Integer] 0 success; 1 error
-        def calculate_proposal(dbus_settings)
-          settings = ProposalSettingsConversion.from_dbus(dbus_settings,
-            config: config, logger: logger)
-
-          logger.info(
-            "Calculating guided storage proposal from D-Bus.\n " \
-            "D-Bus settings: #{dbus_settings}\n" \
-            "Agama settings: #{settings.inspect}"
-          )
-
-          success = proposal.calculate_guided(settings)
-          success ? 0 : 1
-        end
-
         # Whether a proposal was calculated.
         #
         # @return [Boolean]
@@ -284,11 +272,11 @@ module Agama
             [default_volume(mount_path)]
           end
 
-          # @todo Rename as CalculateGuided
+          # @todo Receive guided json settings.
           #
           # result: 0 success; 1 error
           dbus_method(:Calculate, "in settings:a{sv}, out result:u") do |settings|
-            busy_while { calculate_proposal(settings) }
+            busy_while { calculate_guided_proposal(settings) }
           end
 
           dbus_reader :proposal_calculated?, "b", dbus_name: "Calculated"
@@ -396,18 +384,37 @@ module Agama
           backend.proposal
         end
 
+        # Calculates a proposal.
+        #
+        # @param settings_json [Hash]
+        # @return [Integer] 0 success; 1 error
+        def calculate_proposal(settings_json)
+          # @todo Do not accept guided settings.
+          guided_json = settings_json[:guided]
+
+          settings = if guided_json
+            Agama::Storage::ProposalSettings.new_from_json(guided_json, config: config)
+          end
+
+          logger.info(
+            "Calculating storage proposal from D-Bus.\n " \
+            "Input settings: #{settings_json}\n" \
+            "Storage settings: #{settings.inspect}"
+          )
+        end
+
         # Calculates a guided proposal.
         #
-        # @param settings_json [Hash] JSON settings according to schema.
+        # @param settings_dbus [Hash]
         # @return [Integer] 0 success; 1 error
-        def calculate_guided_proposal(settings_json)
-          proposal_settings = Agama::Storage::ProposalSettings
-            .new_from_json(settings_json, config: config)
+        def calculate_guided_proposal(settings_dbus)
+          settings = ProposalSettingsConversion.from_dbus(settings_dbus,
+            config: config, logger: logger)
 
           logger.info(
             "Calculating guided storage proposal from D-Bus.\n" \
-            "Input settings: #{settings_json}\n" \
-            "Agama settings: #{proposal_settings.inspect}"
+            "Input settings: #{settings_dbus}\n" \
+            "Storage settings: #{proposal_settings.inspect}"
           )
 
           success = proposal.calculate_guided(proposal_settings)

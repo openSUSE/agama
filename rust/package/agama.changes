@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 16 13:57:35 UTC 2024 - José Iván López González <jlopez@suse.com>
+
+- Schema definition for basic storage settings
+  (gh#openSUSE/agama#1455).
+
+-------------------------------------------------------------------
 Wed Jul 10 20:11:39 UTC 2024 - Josef Reidinger <jreidinger@suse.com>
 
 - Add to HTTP API a method to remove questions
