@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,29 +21,26 @@
 
 module Agama
   module Storage
-    # Settings regarding Btrfs for a given Volume
-    class BtrfsSettings
-      # Whether the volume contains Btrfs snapshots
-      #
-      # @return [Boolean]
-      attr_accessor :snapshots
-      alias_method :snapshots?, :snapshots
+    module Configs
+      class Partition
+        attr_accessor :search
+        attr_accessor :id
+        attr_accessor :size
+        attr_accessor :encryption
+        attr_accessor :filesystem
 
-      # @return [Boolean]
-      attr_accessor :read_only
-      alias_method :read_only?, :read_only
+        def search_device(devicegraph, parent_sid, used_sids)
+          @search ||= default_search
+          search.find(self, devicegraph, used_sids, parent: parent_sid)
+        end
 
-      # @return [Array<Y2Storage::SubvolSpecification>, nil] if nil, a historical fallback list may
-      #   be applied depending on the mount path of the volume
-      attr_accessor :subvolumes
+        def default_search
+          Search.new
+        end
 
-      # @return [String]
-      attr_accessor :default_subvolume
-
-      def initialize
-        @snapshots = false
-        @read_only = false
-        @default_subvolume = ""
+        def found_device
+          search&.device
+        end
       end
     end
   end
