@@ -30,10 +30,10 @@ use std::{
 /// Agama's CLI global options
 #[derive(Args)]
 struct GlobalOpts {
-    #[clap(long, default_value = "http://localhost/api/")]
+    #[clap(long, default_value = "http://localhost/api")]
     /// uri pointing to agama's remote api. If not provided, default https://localhost/api is
     /// used
-    pub uri: String,
+    pub api: String,
 }
 
 /// Agama's command-line interface
@@ -154,7 +154,10 @@ async fn run_command(cli: Cli) -> Result<(), ServiceError> {
         Commands::Logs(subcommand) => run_logs_cmd(subcommand).await?,
         Commands::Download { url } => crate::profile::download(&url, std::io::stdout())?,
         Commands::Auth(subcommand) => {
-            let client = BaseHTTPClient::bare()?;
+            let mut client = BaseHTTPClient::bare()?;
+
+            client.base_url = cli.opts.api;
+
             run_auth_cmd(client, subcommand).await?;
         }
     };
