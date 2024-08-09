@@ -1,9 +1,9 @@
 // FIXME: the code is pretty similar to iscsi::stream. Refactor the stream to reduce the repetition.
 
-use std::{collections::HashMap, task::Poll};
+use std::{collections::HashMap, sync::Arc, task::Poll};
 
 use agama_lib::{
-    dbus::get_optional_property,
+    dbus::{get_optional_property, to_owned_hash},
     error::ServiceError,
     property_from_dbus,
     storage::{client::dasd::DASDClient, model::dasd::DASDDevice},
@@ -13,7 +13,11 @@ use pin_project::pin_project;
 use thiserror::Error;
 use tokio::sync::mpsc::unbounded_channel;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
-use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue};
+use zbus::{
+    fdo::PropertiesChanged,
+    zvariant::{ObjectPath, OwnedObjectPath, OwnedValue},
+    MatchRule, Message, MessageStream, MessageType,
+};
 
 use crate::{
     dbus::{DBusObjectChange, DBusObjectChangesStream, ObjectsCache},
@@ -147,6 +151,75 @@ impl Stream for DASDDeviceStream {
                         Some(event)
                     } else {
                         log::warn!("Could not process change {:?}", &change);
+                        None
+                    }
+                }
+                None => break None,
+            };
+            if next_value.is_some() {
+                break next_value;
+            }
+        })
+    }
+}
+
+/// This stream listens for DASD progress changes and emits an [Event::DASDFormatJobChanged] event.
+#[pin_project]
+pub struct DASDFormatJobStream {
+    #[pin]
+    inner: MessageStream,
+}
+
+impl DASDFormatJobStream {
+    pub async fn new(connection: &zbus::Connection) -> Result<Self, ServiceError> {
+        let rule = MatchRule::builder()
+            .msg_type(MessageType::Signal)
+            .path_namespace("/org/opensuse/Agama/Storage1/jobs")?
+            .interface("org.freedesktop.DBus.Properties")?
+            .member("PropertiesChanged")?
+            .build();
+        let inner = MessageStream::for_match_rule(rule, connection, None).await?;
+        Ok(Self { inner })
+    }
+
+    pub fn handle_change(message: Result<Arc<Message>, zbus::Error>) -> Option<Event> {
+        let Ok(message) = message else {
+            return None;
+        };
+        let properties = PropertiesChanged::from_message(message)?;
+        let args = properties.args().ok()?;
+
+        if args.interface_name.as_str() == "org.opensuse.Agama.Storage1.DASD.Job" {
+            let path = OwnedObjectPath::from(properties.path().unwrap().clone());
+            let _data = to_owned_hash(&args.changed_properties);
+            Some(Event::DASDFormatJobChanged {
+                job_id: path.to_string(),
+                total: 0,
+                step: 0,
+                done: false,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+impl Stream for DASDFormatJobStream {
+    type Item = Event;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        let mut pinned = self.project();
+
+        Poll::Ready(loop {
+            let item = ready!(pinned.inner.as_mut().poll_next(cx));
+            let next_value = match item {
+                Some(change) => {
+                    if let Some(event) = Self::handle_change(change) {
+                        Some(event)
+                    } else {
                         None
                     }
                 }
