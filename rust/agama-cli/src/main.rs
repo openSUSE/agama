@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Args, Parser};
 
 mod auth;
 mod commands;
@@ -10,6 +10,7 @@ mod progress;
 mod questions;
 
 use crate::error::CliError;
+use agama_lib::base_http_client::BaseHTTPClient;
 use agama_lib::error::ServiceError;
 use agama_lib::manager::ManagerClient;
 use agama_lib::progress::ProgressMonitor;
@@ -26,6 +27,15 @@ use std::{
     time::Duration,
 };
 
+/// Agama's CLI global options
+#[derive(Args)]
+struct GlobalOpts {
+    #[clap(long, default_value = "http://localhost/api")]
+    /// uri pointing to agama's remote api. If not provided, default https://localhost/api is
+    /// used
+    pub api: String,
+}
+
 /// Agama's command-line interface
 ///
 /// This program allows inspecting or changing Agama's configuration, handling installation
@@ -35,6 +45,9 @@ use std::{
 #[derive(Parser)]
 #[command(name = "agama", about, long_about, max_term_width = 100)]
 struct Cli {
+    #[clap(flatten)]
+    pub opts: GlobalOpts,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -119,6 +132,8 @@ async fn build_manager<'a>() -> anyhow::Result<ManagerClient<'a>> {
 }
 
 async fn run_command(cli: Cli) -> Result<(), ServiceError> {
+    // we need to distinguish commands on those which assume that JWT is already available
+    // and those which not (or don't need it)
     match cli.command {
         Commands::Config(subcommand) => {
             let manager = build_manager().await?;
@@ -137,8 +152,19 @@ async fn run_command(cli: Cli) -> Result<(), ServiceError> {
         }
         Commands::Questions(subcommand) => run_questions_cmd(subcommand).await?,
         Commands::Logs(subcommand) => run_logs_cmd(subcommand).await?,
-        Commands::Auth(subcommand) => run_auth_cmd(subcommand).await?,
         Commands::Download { url } => crate::profile::download(&url, std::io::stdout())?,
+        Commands::Auth(subcommand) => {
+            let mut client = BaseHTTPClient::bare()?;
+
+            client.base_url = cli
+                .opts
+                .api
+                .strip_suffix("/")
+                .unwrap_or(client.base_url.as_str())
+                .to_string();
+
+            run_auth_cmd(client, subcommand).await?;
+        }
     };
 
     Ok(())
