@@ -1,5 +1,6 @@
 use crate::{l10n::web::LocaleConfig, network::model::NetworkChange};
 use agama_lib::{
+    jobs::Job,
     manager::InstallationPhase,
     product::RegistrationRequirement,
     progress::Progress,
@@ -88,6 +89,15 @@ pub enum Event {
     },
     DASDDeviceRemoved {
         device: DASDDevice,
+    },
+    JobAdded {
+        job: Job,
+    },
+    JobChanged {
+        job: Job,
+    },
+    JobRemoved {
+        job: Job,
     },
 }
 
