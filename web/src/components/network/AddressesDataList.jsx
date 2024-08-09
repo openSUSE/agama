@@ -94,20 +94,18 @@ export default function AddressesDataList({
     const cells = [
       <DataListCell key={`address-${id}-address`}>
         <IpAddressInput
+          // TRANSLATORS: input field name
+          label={_("IP Address")}
           defaultValue={address}
           onChange={(_, value) => updateAddress(id, "address", value)}
-          // TRANSLATORS: input field name
-          placeholder={_("IP Address")}
-          aria-label={_("IP Address")}
         />
       </DataListCell>,
       <DataListCell key={`address-${id}-prefix`}>
         <IpPrefixInput
+          // TRANSLATORS: input field name
+          label={_("Prefix length or netmask")}
           defaultValue={prefix}
           onChange={(_, value) => updateAddress(id, "prefix", value)}
-          // TRANSLATORS: input field name
-          placeholder={_("Prefix length or netmask")}
-          aria-label={_("Prefix length or netmask")}
         />
       </DataListCell>,
     ];

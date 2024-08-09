@@ -20,7 +20,7 @@
  */
 
 import React, { useState } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   HelperText,
   HelperTextItem,
@@ -35,11 +35,11 @@ import {
   FormHelperText,
 } from "@patternfly/react-core";
 
-import { useInstallerClient } from "~/context/installer";
 import { Page } from "~/components/core";
 import { AddressesDataList, DnsDataList } from "~/components/network";
 import { _ } from "~/i18n";
 import { sprintf } from "sprintf-js";
+import { useConnection, useConnectionMutation } from "~/queries/network";
 
 const METHODS = {
   MANUAL: "manual",
@@ -49,9 +49,10 @@ const METHODS = {
 const usingDHCP = (method) => method === METHODS.AUTO;
 
 export default function IpSettingsForm() {
-  const client = useInstallerClient();
-  const connection = useLoaderData();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { mutateAsync: setConnection } = useConnectionMutation();
+  const connection = useConnection(id);
   const [addresses, setAddresses] = useState(connection.addresses);
   const [nameservers, setNameservers] = useState(
     connection.nameservers.map((a) => {
@@ -98,7 +99,6 @@ export default function IpSettingsForm() {
     setErrors({});
 
     const nextErrors = {};
-
     if (!usingDHCP(method) && sanitizedAddresses.length === 0) {
       // TRANSLATORS: error message
       nextErrors.method = _("At least one address must be provided for selected mode");
@@ -125,12 +125,9 @@ export default function IpSettingsForm() {
       gateway4: gateway,
       nameservers: sanitizedNameservers.map((s) => s.address),
     };
-
-    client.network
-      .updateConnection(updatedConnection)
-      .then(navigate(-1))
-      // TODO: better error reporting. By now, it sets an error for the whole connection.
-      .catch(({ message }) => setErrors({ object: message }));
+    setConnection(updatedConnection)
+      .catch((error) => setErrors(error))
+      .then(navigate(-1));
   };
 
   const renderError = (field) => {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) [2023] SUSE LLC
+ * Copyright (c) [2023-2024] SUSE LLC
  *
  * All Rights Reserved.
  *
@@ -19,95 +19,81 @@
  * find current contact information at www.suse.com.
  */
 
-// @ts-check
-
 import React from "react";
 import { CardBody, Grid, GridItem } from "@patternfly/react-core";
 import { ButtonLink, CardField, EmptyState, Page } from "~/components/core";
 import { ConnectionsTable } from "~/components/network";
-import { formatIp } from "~/client/network/utils";
+import { _ } from "~/i18n";
+import { connectionAddresses } from "~/utils/network";
+import { sprintf } from "sprintf-js";
 import { useNetwork, useNetworkConfigChanges } from "~/queries/network";
 import { PATHS } from "~/routes/network";
-import { sprintf } from "sprintf-js";
-import { _ } from "~/i18n";
+import { partition } from "~/utils";
+
+const WiredConnections = ({ connections, devices }) => {
+  const total = connections.length;
+
+  return (
+    <CardField label={total > 0 && _("Wired")}>
+      <CardBody>
+        {total === 0 && <EmptyState title={_("No wired connections found")} icon="warning" />}
+        {total !== 0 && <ConnectionsTable connections={connections} devices={devices} />}
+      </CardBody>
+    </CardField>
+  );
+};
+
+const WifiConnections = ({ connections, devices }) => {
+  const activeWifiDevice = devices.find((d) => d.type === "wireless" && d.state === "activated");
+  const activeConnection = connections.find((c) => c.id === activeWifiDevice?.connection);
+
+  return (
+    <CardField
+      label={_("Wi-Fi")}
+      actions={
+        <ButtonLink isPrimary={!activeConnection} to={PATHS.wifis}>
+          {activeConnection ? _("Change") : _("Connect")}
+        </ButtonLink>
+      }
+    >
+      <CardField.Content>
+        {activeConnection ? (
+          <EmptyState
+            title={sprintf(_("Connected to %s"), activeConnection.id)}
+            icon="wifi"
+            color="success-color-100"
+          >
+            {connectionAddresses(activeConnection, devices)}
+          </EmptyState>
+        ) : (
+          <EmptyState title={_("No connected yet")} icon="wifi_off" color="color-300">
+            {_("The system has not been configured for connecting to a Wi-Fi network yet.")}
+          </EmptyState>
+        )}
+      </CardField.Content>
+    </CardField>
+  );
+};
+
+const NoWifiAvailable = () => (
+  <CardField>
+    <CardField.Content>
+      <EmptyState title={_("No Wi-Fi supported")} icon="error">
+        {_(
+          "The system does not support Wi-Fi connections, probably because of missing or disabled hardware.",
+        )}
+      </EmptyState>
+    </CardField.Content>
+  </CardField>
+);
 
 /**
  * Page component holding Network settings
- * @component
  */
 export default function NetworkPage() {
-  const { connections, devices, settings } = useNetwork();
-  const connectionDevice = ({ id }) => devices?.find(({ connection }) => id === connection);
-  const connectionAddresses = (connection) => {
-    const device = connectionDevice(connection);
-    const addresses = device ? device.addresses : connection.addresses;
-
-    return addresses?.map(formatIp).join(", ");
-  };
   useNetworkConfigChanges();
-
-  const WifiConnections = () => {
-    const { wireless_enabled: wifiAvailable } = settings;
-
-    if (!wifiAvailable) {
-      return (
-        <CardField>
-          <CardField.Content>
-            <EmptyState title={_("No Wi-Fi supported")} icon="error">
-              {_(
-                "The system does not support Wi-Fi connections, probably because of missing or disabled hardware.",
-              )}
-            </EmptyState>
-          </CardField.Content>
-        </CardField>
-      );
-    }
-
-    const wifiConnections = connections.filter((c) => c.wireless);
-    const activeWifiDevice = devices.find((d) => d.type === "wireless" && d.state === "activated");
-    const activeConnection = wifiConnections.find((c) => c.id === activeWifiDevice?.connection);
-
-    return (
-      <CardField
-        label={_("Wi-Fi")}
-        actions={
-          <ButtonLink isPrimary={!activeConnection} to={PATHS.wifis}>
-            {activeConnection ? _("Change") : _("Connect")}
-          </ButtonLink>
-        }
-      >
-        <CardField.Content>
-          {activeConnection ? (
-            <EmptyState
-              title={sprintf(_("Conected to %s"), activeConnection.id)}
-              icon="wifi"
-              color="success-color-100"
-            >
-              {connectionAddresses(activeConnection)}
-            </EmptyState>
-          ) : (
-            <EmptyState title={_("No connected yet")} icon="wifi_off" color="color-300">
-              {_("The system has not been configured for connecting to a Wi-Fi network yet.")}
-            </EmptyState>
-          )}
-        </CardField.Content>
-      </CardField>
-    );
-  };
-
-  const WiredConnections = () => {
-    const wiredConnections = connections.filter((c) => !c.wireless);
-    const total = wiredConnections.length;
-
-    return (
-      <CardField label={total > 0 && _("Wired")}>
-        <CardBody>
-          {total === 0 && <EmptyState title={_("No wired connections found")} icon="warning" />}
-          {total !== 0 && <ConnectionsTable connections={wiredConnections} devices={devices} />}
-        </CardBody>
-      </CardField>
-    );
-  };
+  const { connections, devices, settings, accessPoints } = useNetwork();
+  const [wifiConnections, wiredConnections] = partition(connections, (c) => c.wireless);
 
   return (
     <Page>
@@ -118,10 +104,14 @@ export default function NetworkPage() {
       <Page.MainContent>
         <Grid hasGutter>
           <GridItem sm={12} xl={6}>
-            <WiredConnections />
+            <WiredConnections connections={wiredConnections} devices={devices} />
           </GridItem>
           <GridItem sm={12} xl={6}>
-            <WifiConnections />
+            {settings.wireless_enabled ? (
+              <WifiConnections connections={wifiConnections} devices={devices} />
+            ) : (
+              <NoWifiAvailable />
+            )}
           </GridItem>
         </Grid>
       </Page.MainContent>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) [2022] SUSE LLC
+ * Copyright (c) [2022-2024] SUSE LLC
  *
  * All Rights Reserved.
  *
@@ -19,7 +19,7 @@
  * find current contact information at www.suse.com.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActionGroup,
   Alert,
@@ -31,10 +31,14 @@ import {
   TextInput,
 } from "@patternfly/react-core";
 import { PasswordInput } from "~/components/core";
-import { useInstallerClient } from "~/context/installer";
-import { useNetworkConfigChanges } from "~/queries/network";
+import {
+  useAddConnectionMutation,
+  useConnectionMutation,
+  useSelectedWifiChange,
+} from "~/queries/network";
+import { Connection, Wireless } from "~/types/network";
+import sprintf from "sprintf-js";
 import { _ } from "~/i18n";
-import { useQueryClient } from "@tanstack/react-query";
 
 /*
  * FIXME: it should be moved to the SecurityProtocols enum that already exists or to a class based
@@ -57,54 +61,52 @@ const securityFrom = (supported) => {
   return "";
 };
 
-export default function WifiConnectionForm({ network, onCancel, onSubmitCallback }) {
-  const { network: client } = useInstallerClient();
-  const queryClient = useQueryClient();
-  const [error, setError] = useState(false);
+// FIXME: improve error handling. The errors props shuld have a key/value error
+//  and the component should show all of them, if any
+export default function WifiConnectionForm({ network, errors = {}, onCancel }) {
+  const { mutate: addConnection } = useAddConnectionMutation();
+  const { mutate: updateConnection } = useConnectionMutation();
+  const { mutate: updateSelectedNetwork } = useSelectedWifiChange();
+  const [showErrors, setShowErrors] = useState(Object.keys(errors).length > 0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [ssid, setSsid] = useState(network?.ssid || "");
   const [password, setPassword] = useState(network?.password || "");
   const [security, setSecurity] = useState(securityFrom(network?.security || []));
   const hidden = network?.hidden || false;
 
-  useNetworkConfigChanges();
-
   const accept = async (e) => {
     e.preventDefault();
-    setError(false);
+    setShowErrors(false);
     setIsConnecting(true);
+    updateSelectedNetwork({ ssid, needsAuth: null });
 
-    if (typeof onSubmitCallback === "function") {
-      onSubmitCallback({ ssid, password, hidden, security: [security] });
-    }
-
-    client
-      .addAndConnectTo(ssid, { security, password, hidden })
-      .catch(() => setError(true))
-      .finally(
-        () => setIsConnecting(false) && queryClient.invalidateQueries({ queryKey: ["network"] }),
-      );
+    const wireless = new Wireless({ ssid, security, password, hidden });
+    const connection = new Connection(ssid, { wireless });
+    const action = network.settings ? updateConnection : addConnection;
+    action(connection);
   };
 
   return (
-    <Form id={`${ssid}-connection-form`} onSubmit={accept}>
-      {error && (
-        <Alert variant="warning" isInline title={_("Something went wrong")}>
-          <p>{_("Please, review provided settings and try again.")}</p>
+    /** TRANSLATORS: accessible name for the WiFi connection form */
+    <Form onSubmit={accept} aria-label={_("WiFi connection form")}>
+      {showErrors && (
+        <Alert
+          variant="warning"
+          isInline
+          title={
+            errors.needsAuth
+              ? _("Authentication failed, please try again")
+              : _("Something went wrong")
+          }
+        >
+          {!errors.needsAuth && <p>{_("Please, review provided settings and try again.")}</p>}
         </Alert>
       )}
 
       {network?.hidden && (
         // TRANSLATORS: SSID (Wifi network name) configuration
         <FormGroup fieldId="ssid" label={_("SSID")}>
-          <TextInput
-            id="ssid"
-            name="ssid"
-            label={_("SSID")}
-            aria-label="ssid"
-            value={ssid}
-            onChange={(_, value) => setSsid(value)}
-          />
+          <TextInput id="ssid" name="ssid" value={ssid} onChange={(_, value) => setSsid(value)} />
         </FormGroup>
       )}
 
