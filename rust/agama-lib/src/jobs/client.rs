@@ -2,7 +2,7 @@
 
 use zbus::{fdo::ObjectManagerProxy, zvariant::OwnedObjectPath, Connection};
 
-use crate::{dbus::extract_id_from_path, error::ServiceError};
+use crate::error::ServiceError;
 
 use super::Job;
 
@@ -39,7 +39,7 @@ impl<'a> JobsClient<'a> {
 
             match Job::try_from(properties) {
                 Ok(mut job) => {
-                    job.id = extract_id_from_path(&path).unwrap_or(0);
+                    job.id = path.to_string();
                     jobs.push((path, job));
                 }
                 Err(error) => {

@@ -15,7 +15,7 @@ pub mod client;
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct Job {
     /// Artificial job identifier.
-    pub id: u32,
+    pub id: String,
     /// Whether the job is running.
     pub running: bool,
     /// Job exit code.
@@ -27,9 +27,9 @@ impl TryFrom<&HashMap<String, OwnedValue>> for Job {
 
     fn try_from(value: &HashMap<String, OwnedValue>) -> Result<Self, Self::Error> {
         Ok(Job {
-            id: 0,
             running: get_property(value, "Running")?,
             exit_code: get_property(value, "ExitCode")?,
+            ..Default::default()
         })
     }
 }

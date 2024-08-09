@@ -192,6 +192,7 @@ impl DASDFormatJobStream {
         if args.interface_name.as_str() == "org.opensuse.Agama.Storage1.DASD.Job" {
             let path = OwnedObjectPath::from(properties.path().unwrap().clone());
             let _data = to_owned_hash(&args.changed_properties);
+            // FIXME: extract the correct data.
             Some(Event::DASDFormatJobChanged {
                 job_id: path.to_string(),
                 total: 0,
