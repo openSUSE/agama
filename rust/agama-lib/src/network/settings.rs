@@ -44,7 +44,7 @@ pub struct WirelessSettings {
     pub mode: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct BondSettings {
     pub mode: String,
     #[serde(skip_serializing_if = "Option::is_none")]

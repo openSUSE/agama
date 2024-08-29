@@ -26,7 +26,6 @@ use openssl::ssl::{Ssl, SslAcceptor, SslMethod};
 use tokio::sync::broadcast::channel;
 use tokio_openssl::SslStream;
 use tower::Service;
-use utoipa::OpenApi;
 
 const DEFAULT_WEB_UI_DIR: &str = "/usr/share/agama/web_ui";
 const TOKEN_FILE: &str = "/run/agama/token";
@@ -361,7 +360,7 @@ async fn serve_command(args: ServeArgs) -> anyhow::Result<()> {
 
 /// Display the API documentation in OpenAPI format.
 fn openapi_command() -> anyhow::Result<()> {
-    println!("{}", web::ApiDoc::openapi().to_pretty_json().unwrap());
+    println!("{}", web::ApiDoc::build().to_pretty_json().unwrap());
     Ok(())
 }
 
