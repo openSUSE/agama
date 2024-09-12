@@ -117,7 +117,8 @@ pub async fn storage_service(dbus: zbus::Connection) -> Result<Router, ServiceEr
     responses(
         (status = 200, description = "Devices were probed and an initial proposal were performed"),
         (status = 400, description = "The D-Bus service could not perform the action")
-    )
+    ),
+    operation_id = "storage_probe"
 )]
 async fn probe(State(state): State<StorageState<'_>>) -> Result<Json<()>, Error> {
     Ok(Json(state.client.probe().await?))

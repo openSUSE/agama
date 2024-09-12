@@ -83,6 +83,7 @@ dependencies = [
  "regex",
  "serde",
  "thiserror",
+ "utoipa",
 ]
 
 [[package]]
@@ -4386,6 +4387,7 @@ dependencies = [
  "quote",
  "regex",
  "syn 2.0.72",
+ "uuid",
 ]
 
 [[package]]
