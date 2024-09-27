@@ -94,6 +94,27 @@ const useL10nConfigChanges = () => {
   }, [client, queryClient]);
 };
 
+/**
+ * Hook that returns a useEffect to listen for L10nConfigChanged events
+ *
+ * When the configuration changes, it invalidates the config query and forces the router to
+ * revalidate its data (executing the loaders again).
+ */
+const useL10nUIChanges = () => {
+  const queryClient = useQueryClient();
+  const client = useInstallerClient();
+
+  React.useEffect(() => {
+    if (!client) return;
+
+    return client.onEvent((event) => {
+      if (event.type === "LocaleChanged") {
+        queryClient.invalidateQueries({ queryKey: ["l10n/config"] });
+      }
+    });
+  }, [client, queryClient]);
+};
+
 /// Returns the l10n data.
 const useL10n = () => {
   const [{ data: config }, { data: locales }, { data: keymaps }, { data: timezones }] =
@@ -127,4 +148,5 @@ export {
   useConfigMutation,
   useL10n,
   useL10nConfigChanges,
+  useL10nUIChanges,
 };

@@ -29,6 +29,7 @@ import { useInstallerClientStatus } from "./installer";
 import agama from "~/agama";
 import supportedLanguages from "~/languages.json";
 import { fetchConfig, updateConfig } from "~/api/l10n";
+import { useL10n, useL10nUIChanges } from "~/queries/l10n";
 
 const L10nContext = React.createContext(null);
 
@@ -221,6 +222,8 @@ function InstallerL10nProvider({ children }) {
   const [keymap, setKeymap] = useState(undefined);
   const [backendPending, setBackendPending] = useState(false);
   const { cancellablePromise } = useCancellablePromise();
+  const l10n = useL10n();
+  useL10nUIChanges();
 
   const storeInstallerLanguage = useCallback(
     async (newLanguage) => {
@@ -297,7 +300,14 @@ function InstallerL10nProvider({ children }) {
 
   const value = { language, changeLanguage, keymap, changeKeymap };
 
-  return <L10nContext.Provider value={value}>{children}</L10nContext.Provider>;
+  return (
+    <L10nContext.Provider value={value}>
+      <div>
+        <p>{l10n.uiLocale?.id}</p>
+        {children}
+      </div>
+    </L10nContext.Provider>
+  );
 }
 
 export { InstallerL10nProvider, useInstallerL10n };
