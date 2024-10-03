@@ -130,8 +130,12 @@ install -m 0644 %{_builddir}/agama/share/agama.libsonnet %{buildroot}%{_datadir}
 install --directory %{buildroot}%{_datadir}/dbus-1/agama-services
 install -m 0644 --target-directory=%{buildroot}%{_datadir}/dbus-1/agama-services %{_builddir}/agama/share/org.opensuse.Agama1.service
 install -D -m 0644 %{_builddir}/agama/share/agama-web-server.service %{buildroot}%{_unitdir}/agama-web-server.service
+
+# install manpages
+mkdir -p %{buildroot}%{_mandir}/man1
 install -m 0644 %{_builddir}/agama/out/man/* %{buildroot}%{_mandir}/man1/
 
+# install shell completion scripts
 install -Dm644 %{builddir}/agama/out/shell/%{name}.bash %{buildroot}%{_datadir}/bash-completion/completions/%{name}
 install -Dm644 %{builddir}/agama/out/shell/_%{name} %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
 install -Dm644 %{builddir}/agama/out/shell/%{name}.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
