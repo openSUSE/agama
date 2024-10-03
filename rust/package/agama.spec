@@ -136,9 +136,9 @@ mkdir -p %{buildroot}%{_mandir}/man1
 install -m 0644 %{_builddir}/agama/out/man/* %{buildroot}%{_mandir}/man1/
 
 # install shell completion scripts
-install -Dm644 %{builddir}/agama/out/shell/%{name}.bash %{buildroot}%{_datadir}/bash-completion/completions/%{name}
-install -Dm644 %{builddir}/agama/out/shell/_%{name} %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
-install -Dm644 %{builddir}/agama/out/shell/%{name}.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
+install -Dm644 %{_builddir}/agama/out/shell/%{name}.bash %{buildroot}%{_datadir}/bash-completion/completions/%{name}
+install -Dm644 %{_builddir}/agama/out/shell/_%{name} %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
+install -Dm644 %{_builddir}/agama/out/shell/%{name}.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %check
 PATH=$PWD/share/bin:$PATH
