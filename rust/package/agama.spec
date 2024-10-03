@@ -114,9 +114,9 @@ Zsh command-line completion support for %{name}.
 
 %build
 %{cargo_build}
-cargo xtask manpages
+cargo run --package xtask -- manpages
 gzip out/man/*
-cargo xtask complete
+cargo run --package xtask -- complete
 
 %install
 install -D -d -m 0755 %{buildroot}%{_bindir}
