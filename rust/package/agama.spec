@@ -82,6 +82,31 @@ Requires:       %{name} = %{version}
 Requires:       bash-completion
 BuildArch:      noarch
 
+%description bash-completion
+Bash command-line completion support for %{name}.
+
+%package fish-completion
+Summary:        Fish Completion for %{name}
+Group:          System/Shells
+Supplements:    (%{name} and fish)
+Requires:       %{name} = %{version}
+Requires:       fish
+BuildArch:      noarch
+
+%description fish-completion
+Fish command-line completion support for %{name}.
+
+%package zsh-completion
+Summary:        Zsh Completion for %{name}
+Group:          System/Shells
+Supplements:    (%{name} and zsh)
+Requires:       %{name} = %{version}
+Requires:       zsh
+BuildArch:      noarch
+
+%description zsh-completion
+Zsh command-line completion support for %{name}.
+
 %prep
 %autosetup -a1 -n agama
 # Remove exec bits to prevent an issue in fedora shebang checking. Uncomment only if required.
@@ -106,7 +131,10 @@ install --directory %{buildroot}%{_datadir}/dbus-1/agama-services
 install -m 0644 --target-directory=%{buildroot}%{_datadir}/dbus-1/agama-services %{_builddir}/agama/share/org.opensuse.Agama1.service
 install -D -m 0644 %{_builddir}/agama/share/agama-web-server.service %{buildroot}%{_unitdir}/agama-web-server.service
 install -m 0644 %{_builddir}/agama/out/man/* %{buildroot}%{_mandir}/man1/
+
 install -Dm644 %{builddir}/agama/out/shell/%{name}.bash %{buildroot}%{_datadir}/bash-completion/completions/%{name}
+install -Dm644 %{builddir}/agama/out/shell/_%{name} %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
+install -Dm644 %{builddir}/agama/out/shell/%{name}.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %check
 PATH=$PWD/share/bin:$PATH
@@ -144,5 +172,16 @@ echo $PATH
 %{_datadir}/agama-cli/agama.libsonnet
 %{_datadir}/agama-cli/profile.schema.json
 %{_mandir}/man1/agama*1%{?ext_man}
+
+%files bash-completion
+%{_datadir}/bash-completion/*
+
+%files fish-completion
+%dir %{_datadir}/fish
+%{_datadir}/fish/*
+
+%files zsh-completion
+%dir %{_datadir}/zsh
+%{_datadir}/zsh/*
 
 %changelog
