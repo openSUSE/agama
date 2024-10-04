@@ -177,14 +177,14 @@ echo $PATH
 %{_datadir}/agama-cli/profile.schema.json
 %{_mandir}/man1/agama*1%{?ext_man}
 
-%files bash-completion
+%files -n agama-cli-bash-completion
 %{_datadir}/bash-completion/*
 
-%files fish-completion
+%files -n agama-cli-fish-completion
 %dir %{_datadir}/fish
 %{_datadir}/fish/*
 
-%files zsh-completion
+%files -n agama-cli-zsh-completion
 %dir %{_datadir}/zsh
 %{_datadir}/zsh/*
 
