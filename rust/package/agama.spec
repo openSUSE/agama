@@ -104,7 +104,7 @@ Requires:       %{name}-cli = %{version}
 Requires:       zsh
 BuildArch:      noarch
 
-%description agama-cli-zsh-completion
+%description -n agama-cli-zsh-completion
 Zsh command-line completion support for %{name}-cli.
 
 %prep
