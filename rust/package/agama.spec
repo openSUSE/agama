@@ -74,38 +74,38 @@ Url:            https://github.com/opensuse/agama
 %description -n agama-cli
 Command line program to interact with the Agama installer.
 
-%package bash-completion
-Summary:        Bash Completion for %{name}
+%package -n agama-cli-bash-completion
+Summary:        Bash Completion for %{name}-cli
 Group:          System/Shells
-Supplements:    (%{name} and bash-completion)
-Requires:       %{name} = %{version}
+Supplements:    (%{name}-cli and bash-completion)
+Requires:       %{name}-cli = %{version}
 Requires:       bash-completion
 BuildArch:      noarch
 
-%description bash-completion
+%description -n agama-cli-bash-completion
 Bash command-line completion support for %{name}.
 
-%package fish-completion
-Summary:        Fish Completion for %{name}
+%package -n agama-cli-fish-completion
+Summary:        Fish Completion for %{name}-cli
 Group:          System/Shells
-Supplements:    (%{name} and fish)
-Requires:       %{name} = %{version}
+Supplements:    (%{name}-cli and fish)
+Requires:       %{name}-cli = %{version}
 Requires:       fish
 BuildArch:      noarch
 
-%description fish-completion
-Fish command-line completion support for %{name}.
+%description -n agama-cli-fish-completion
+Fish command-line completion support for %{name}-cli.
 
-%package zsh-completion
-Summary:        Zsh Completion for %{name}
+%package -n agama-cli-zsh-completion
+Summary:        Zsh Completion for %{name}-cli
 Group:          System/Shells
-Supplements:    (%{name} and zsh)
-Requires:       %{name} = %{version}
+Supplements:    (%{name}-cli and zsh)
+Requires:       %{name}-cli = %{version}
 Requires:       zsh
 BuildArch:      noarch
 
-%description zsh-completion
-Zsh command-line completion support for %{name}.
+%description agama-cli-zsh-completion
+Zsh command-line completion support for %{name}-cli.
 
 %prep
 %autosetup -a1 -n agama
