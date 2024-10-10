@@ -18,17 +18,34 @@
 // To contact SUSE LLC about this file by physical or electronic mail, you may
 // find current contact information at www.suse.com.
 
-pub mod cert;
-pub mod dbus;
-pub mod error;
-pub mod l10n;
-pub mod logs;
-pub mod manager;
-pub mod network;
-pub mod questions;
-pub mod scripts;
-pub mod software;
-pub mod storage;
-pub mod users;
-pub mod web;
-pub use web::service;
+use crate::error::ServiceError;
+
+use super::{client::ScriptsClient, settings::ScriptsSettings};
+
+pub struct ScriptsStore {
+    client: ScriptsClient,
+}
+
+impl ScriptsStore {
+    pub fn new() -> Result<Self, ServiceError> {
+        Ok(Self {
+            client: ScriptsClient::new()?,
+        })
+    }
+
+    pub fn new_with_client(client: ScriptsClient) -> Result<Self, ServiceError> {
+        Ok(Self { client })
+    }
+
+    pub async fn load(&self) -> Result<ScriptsSettings, ServiceError> {
+        // TODO: export nothing
+        Ok(ScriptsSettings::default())
+    }
+
+    pub async fn store(&self, settings: &ScriptsSettings) -> Result<(), ServiceError> {
+        for pre in &settings.pre {
+            self.client.add_script(pre).await?;
+        }
+        Ok(())
+    }
+}
