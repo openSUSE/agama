@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Oct 10 07:17:00 UTC 2024 - Michal Filka <mfilka@suse.com>
+
+- Implemented option for providing remote API address for the CLI 
+
+-------------------------------------------------------------------
 Fri Sep 27 13:09:10 UTC 2024 - Jorik Cronenberg <jorik.cronenberg@suse.com>
 
 - Fix optional network settings (gh#agama-project/agama#1641).
